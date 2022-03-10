@@ -7,4 +7,5 @@ int exit(int code);
 void* naive_malloc();
 void naive_free(void* va);
 int fork();
+int wait(int pid);
 void yield();
