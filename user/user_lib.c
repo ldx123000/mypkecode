@@ -70,6 +70,10 @@ int fork() {
   return do_user_call(SYS_user_fork, 0, 0, 0, 0, 0, 0, 0);
 }
 
+int wait(int pid){
+  return do_user_call(SYS_user_wait, pid, 0, 0, 0, 0, 0, 0);
+}
+
 //
 // lib call to yield
 //

@@ -19,7 +19,7 @@ int main(void) {
             flag = 2;
             printu("Grandchild process end, flag = %d.\n", flag);
         } else {
-            wait(pid);
+            wait(pid);//子进程的pid->Grandchild
             printu("Child process end, flag = %d.\n", flag);
         }
     } else {
