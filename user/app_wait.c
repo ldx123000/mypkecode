@@ -16,14 +16,14 @@ int main(void) {
         flag = 1;
         pid = fork();
         if (pid == 0) {
-            flag = 2;
+            flag = 2;//2
             printu("Grandchild process end, flag = %d.\n", flag);
         } else {
-            wait(pid);//子进程的pid->Grandchild
+            wait(pid);//子进程的pid->Grandchild 1
             printu("Child process end, flag = %d.\n", flag);
         }
     } else {
-        wait(-1);
+        wait(-1);//0
         printu("Parent process end, flag = %d.\n", flag);
     }
     exit(0);

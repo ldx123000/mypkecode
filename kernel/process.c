@@ -223,44 +223,50 @@ int do_fork(process *parent)
   child->trapframe->regs.a0 = 0;
   child->parent = parent;
   insert_to_ready_queue(child);
-
+  
   return child->pid;
+  schedule();
 }
 
 int wait(int pid)
 {
+  //sprint("wait!!!!\n");
+for(;;){
   process *np;
-  process *tmp;
   int flag = -1;
   for (np = procs; np < &procs[NPROC]; np++) {
     if (np != NULL && np->parent != NULL && np->parent == current && np->pid == pid) {
+      current->status = BLOCKED;
+      
+      //insert_to_ready_queue(np);
+      schedule();
+      insert_to_ready_queue(np->parent);
+      //sprint("uuuuuuuuuu\n");
       flag = 1;
-      tmp = np;
     }
 
     else if (np != NULL && np->parent != NULL && np->parent == current) {
+      current->status = BLOCKED;
+
+      //insert_to_ready_queue(np);
+      schedule();
+      insert_to_ready_queue(np->parent);
       flag = 0;
-      tmp = np;
     }
+    
   }
   if (flag == -1)
     return -1;
-  current->status = READY;
-  insert_to_ready_queue(current);
-  schedule();
-  for (;;) {
-    if (pid == -1) {
-      for (np = procs; np < &procs[NPROC]; np++) {
-        if (np != NULL && np->parent != NULL && np->parent == current && np->status == ZOMBIE)
-          return np->pid;
-      }
-    } else if (pid > 0 && flag == 1) {
-      for (np = procs; np < &procs[NPROC]; np++) {
-        if (np != NULL && np->parent != NULL && np->parent == current && np->pid == pid && np->status == ZOMBIE)
-          return pid;
-      }
-    } else {
-      return -1;
-    }
+  else{
+    sprint("1111111111\n");
+    return np->pid;
   }
+    
+}
+  
+  
+  
+  
+  //insert_to_ready_queue(current);
+  //schedule();
 }
