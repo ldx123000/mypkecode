@@ -216,6 +216,16 @@ int do_fork(process *parent)
       child->mapped_info[child->total_mapped_region].seg_type = CODE_SEGMENT;
       child->total_mapped_region++;
       break;
+    case DATA_SEGMENT:
+      sprint("ffffffffffffffffff\n");
+      child->mapped_info[i].va = parent->mapped_info[i].va;
+      for (int j = 0; j < parent->mapped_info[i].npages; j++) {
+        void *pa = alloc_page();
+        int va = parent->mapped_info[i].va + PGSIZE * j;
+        memcpy(pa, (void *)lookup_pa(parent->pagetable, va), PGSIZE);
+        user_vm_map((pagetable_t)child->pagetable, va, PGSIZE, (uint64)pa, prot_to_type(PROT_WRITE | PROT_READ, 1));
+      }
+      break;
     }
   }
 
@@ -233,7 +243,7 @@ int sem_new(int id)
   for (int i = 0; i < NPROC; i++) {
     if (sems[i].id == id) {
       sems[i].status = BLOCKED;
-      
+
       return id;
     }
   }
