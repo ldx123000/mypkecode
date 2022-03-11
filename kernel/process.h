@@ -73,6 +73,12 @@ typedef struct process {
   int tick_count;
 }process;
 
+typedef struct sem {
+  int status;
+  int id;
+  int S;
+} sem;
+
 // switch to run user app
 void switch_to(process*);
 // initialize process pool (the procs[] array)
@@ -83,6 +89,10 @@ process* alloc_process();
 int free_process( process* proc );
 // fork a child from parent
 int do_fork(process* parent);
+
+int sem_new(int id);
+int sem_P(int id);
+int sem_V(int id);
 
 // current running process
 extern process* current;

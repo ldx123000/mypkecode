@@ -68,6 +68,18 @@ ssize_t sys_user_fork() {
   return do_fork( current );
 }
 
+uint64 sys_user_sem_new(uint64 va) {
+   return sem_new(va);
+}
+
+uint64 sys_user_sem_P(uint64 va) {
+   return sem_P(va);
+}
+
+uint64 sys_user_sem_V(uint64 va) {
+   return sem_V(va);
+}
+
 //
 // kerenl entry point of yield
 //
