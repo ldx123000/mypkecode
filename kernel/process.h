@@ -27,4 +27,6 @@ void switch_to(process*);
 
 extern process* current;
 
+void print_backtrace(int num);
+
 #endif

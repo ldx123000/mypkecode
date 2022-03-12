@@ -51,3 +51,11 @@ void switch_to(process* proc) {
   // switch to user mode with sret.
   return_to_user(proc->trapframe);
 }
+
+void print_backtrace(int num){
+  current->trapframe->regs.ra;//ra
+  current->trapframe->regs.s0;//fp 找到返回地址
+  
+  current->trapframe->kernel_sp;
+  return;
+}
