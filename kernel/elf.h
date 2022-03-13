@@ -1,10 +1,12 @@
 #ifndef _ELF_H_
 #define _ELF_H_
 
-#include "util/types.h"
 #include "process.h"
+#include "util/types.h"
 
 #define MAX_CMDLINE_ARGS 64
+
+#define MAX_SYM_NUM 32
 
 // elf header structure
 typedef struct elf_header_t {
@@ -37,7 +39,29 @@ typedef struct elf_prog_header_t {
   uint64 align;  /* Segment alignment */
 } elf_prog_header;
 
-#define ELF_MAGIC 0x464C457FU  // "\x7FELF" in little endian
+typedef struct elf_section_header_t {
+  uint32 name;
+  uint32 type;
+  uint64 flags;
+  uint64 addr;
+  uint64 offset;
+  uint64 size;
+  uint32 link;
+  uint32 info;
+  uint64 addralign;
+  uint64 entsize;
+} elf_section_header;
+
+typedef struct elf_string_and_symbol_tables {
+  uint32 name;
+  unsigned char info;
+  unsigned char other;
+  uint16 shndx;
+  uint64 value;
+  uint64 size;
+} elf_sym;
+
+#define ELF_MAGIC 0x464C457FU // "\x7FELF" in little endian
 #define ELF_PROG_LOAD 1
 
 typedef enum elf_status_t {
@@ -53,6 +77,9 @@ typedef enum elf_status_t {
 typedef struct elf_ctx_t {
   void *info;
   elf_header ehdr;
+  int sym_num;
+  elf_sym sym[MAX_SYM_NUM];
+  char str[200];
 } elf_ctx;
 
 elf_status elf_init(elf_ctx *ctx, void *info);
