@@ -5,6 +5,7 @@
 #include "process.h"
 
 #define MAX_CMDLINE_ARGS 64
+#define MAX_DEBUG_NUM 32
 
 // elf header structure
 typedef struct elf_header_t {
@@ -80,11 +81,19 @@ typedef enum elf_status_t {
 typedef struct elf_ctx_t {
   void *info;
   elf_header ehdr;
+  uint64 debug_lenth;
+  char debug[1800];
 } elf_ctx;
+
+typedef struct debug_data_t {
+  char **dir; code_file *file; addr_line *line; int line_ind;
+}debug_data;
 
 elf_status elf_init(elf_ctx *ctx, void *info);
 elf_status elf_load(elf_ctx *ctx);
 
+void make_addr_line(elf_ctx *ctx, char *debug_line, uint64 length);
 void load_bincode_from_host_elf(process *p);
+void elf_print(uint64 epc);
 
 #endif
