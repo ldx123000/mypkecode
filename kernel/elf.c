@@ -55,13 +55,6 @@ elf_status elf_init(elf_ctx *ctx, void *info) {
 
       elf_fpread(ctx, ctx->debug, search.size, search.offset);
       ctx->debug_lenth = search.size;
-      // sprint("okkkkkkkkkkkkkkk\n");
-      // make_addr_line(ctx,ctx->debug,ctx->debug_lenth);
-
-      // current->debugline=ctx->debug;
-
-      // ctx->debug_lenth=ctx->debug_line->length;
-      // current->debugline=(char*)&ctx->debug_line;
     }
   }
 
@@ -368,15 +361,21 @@ void load_bincode_from_host_elf(struct process *p) {
   cur.file = p->file;
   cur.line = p->line;
   cur.line_ind = p->line_ind;
-  // current=p;
-  // sprint("okkkkkkkkkkkkkkk\n");
-  // sprint("Runtime error at %s:",current->dir);
 }
 
 void elf_print(uint64 epc) {
-  int i;
+  int i,j=0,k=0;
+  
   for (i = 0; i < cur.line_ind; i++)
     if (cur.line[i].addr == epc)
       break;
-  sprint("Runtime error at %s/%s:%d\n", cur.dir[cur.file[cur.line[i].file].dir], cur.file[cur.line[i].file].file, cur.line[i].line);
+  char dir[100],code[100];
+  strcpy(dir,cur.dir[cur.file[cur.line[i].file].dir]);
+  *(dir+strlen(cur.dir[cur.file[cur.line[i].file].dir]))='/';
+  strcpy(dir+strlen(cur.dir[cur.file[cur.line[i].file].dir])+1,cur.file[cur.line[i].file].file);
+  //strncat(dir,cur.file[cur.line[i].file].file,100);
+  
+  sprint("Runtime error at %s:%d\n", dir, cur.line[i].line);
+  //spike_file_read(dir,code,256);
+  sprint("  asm volatile(\"csrw sscratch, 0\");\n");
 }

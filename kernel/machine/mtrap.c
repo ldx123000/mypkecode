@@ -3,7 +3,7 @@
 #include "kernel/riscv.h"
 #include "spike_interface/spike_utils.h"
 
-static void handle_instruction_access_fault() { panic("FUCK Instruction access fault!"); }
+static void handle_instruction_access_fault() { panic("Instruction access fault!"); }
 
 static void handle_load_access_fault() { panic("Load access fault!"); }
 
@@ -29,10 +29,7 @@ static void handle_timer() {
 //
 void handle_mtrap() {
   uint64 epc = read_csr(mepc);
-  sprint("mepc=%p\n", epc);
   elf_print(epc);
-  
-  //sprint("%s\n",current->debugline);
   uint64 mcause = read_csr(mcause);
   switch (mcause) {
   case CAUSE_MTIMER:
