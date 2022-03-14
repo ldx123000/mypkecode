@@ -211,7 +211,6 @@ int do_fork(process *parent) {
       child->total_mapped_region++;
       break;
     case DATA_SEGMENT:
-      sprint("ffffffffffffffffff\n");
       child->mapped_info[i].va = parent->mapped_info[i].va;
       for (int j = 0; j < parent->mapped_info[i].npages; j++) {
         void *pa = alloc_page();
