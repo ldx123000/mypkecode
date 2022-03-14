@@ -14,20 +14,20 @@ typedef struct trapframe {
   // saved user process counter
   /* offset:264 */ uint64 epc;
 
-  //kernel page table
+  // kernel page table
   /* offset:272 */ uint64 kernel_satp;
-}trapframe;
+} trapframe;
 
 // PKE kernel supports at most 32 processes
 #define NPROC 32
 
 // possible status of a process
 enum proc_status {
-  FREE,            // unused state
-  READY,           // ready state
-  RUNNING,         // currently running
-  BLOCKED,         // waiting for something
-  ZOMBIE,          // terminated but not reclaimed yet
+  FREE,    // unused state
+  READY,   // ready state
+  RUNNING, // currently running
+  BLOCKED, // waiting for something
+  ZOMBIE,  // terminated but not reclaimed yet
 };
 
 // types of a segment
@@ -53,7 +53,7 @@ typedef struct process {
   // user page table
   pagetable_t pagetable;
   // trapframe storing the context of a (User mode) process.
-  trapframe* trapframe;
+  trapframe *trapframe;
 
   // points to a page that contains mapped_regions
   mapped_region *mapped_info;
@@ -71,7 +71,7 @@ typedef struct process {
 
   // accounting
   int tick_count;
-}process;
+} process;
 
 typedef struct sem {
   int status;
@@ -80,22 +80,24 @@ typedef struct sem {
 } sem;
 
 // switch to run user app
-void switch_to(process*);
+void switch_to(process *);
 // initialize process pool (the procs[] array)
 void init_proc_pool();
 // allocate an empty process, init its vm space. returns its pid
-process* alloc_process();
+process *alloc_process();
 // reclaim a process, destruct its vm space and free physical pages.
-int free_process( process* proc );
+int free_process(process *proc);
 // fork a child from parent
-int do_fork(process* parent);
+int do_fork(process *parent);
 
-int sem_new(int id);
+void insert_to_wait_queue(process *proc);
+process *get_process_from_wait_queue();
+int sem_new(int num);
 int sem_P(int id);
 int sem_V(int id);
 
 // current running process
-extern process* current;
+extern process *current;
 // virtual address of our simple heap
 extern uint64 g_ufree_page;
 

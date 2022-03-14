@@ -1,7 +1,7 @@
 /*
- * Utility functions for process management. 
+ * Utility functions for process management.
  *
- * Note: in Lab1, only one process (i.e., our user application) exists. Therefore, 
+ * Note: in Lab1, only one process (i.e., our user application) exists. Therefore,
  * PKE OS at this stage will set "current" to the loaded user application, and also
  * switch to the old "current" process after trap handling.
  */
@@ -18,7 +18,7 @@
 #include "string.h"
 #include "vmm.h"
 
-//Two functions defined in kernel/usertrap.S
+// Two functions defined in kernel/usertrap.S
 extern char smode_trap_vector[];
 extern void return_to_user(trapframe *, uint64 satp);
 
@@ -42,8 +42,7 @@ uint64 g_ufree_page = USER_FREE_ADDRESS_START;
 //
 // switch to a user-mode process
 //
-void switch_to(process *proc)
-{
+void switch_to(process *proc) {
   assert(proc);
   current = proc;
 
@@ -67,7 +66,7 @@ void switch_to(process *proc)
   // set S Exception Program Counter to the saved user pc.
   write_csr(sepc, proc->trapframe->epc);
 
-  //make user page table
+  // make user page table
   uint64 user_satp = MAKE_SATP(proc->pagetable);
 
   // switch to user mode with sret.
@@ -77,8 +76,7 @@ void switch_to(process *proc)
 //
 // initialize process pool (the procs[] array)
 //
-void init_proc_pool()
-{
+void init_proc_pool() {
   memset(procs, 0, sizeof(struct process) * NPROC);
 
   for (int i = 0; i < NPROC; ++i) {
@@ -90,15 +88,14 @@ void init_proc_pool()
   for (int i = 0; i < NPROC; ++i) {
     sems[i].id = i;
     sems[i].status = FREE;
-    sems[i].S = 1;
+    sems[i].S = 0;
   }
 }
 
 //
 // allocate an empty process, init its vm space. returns its pid
 //
-process *alloc_process()
-{
+process *alloc_process() {
   // locate the first usable process structure
   int i;
 
@@ -112,16 +109,16 @@ process *alloc_process()
   }
 
   // init proc[i]'s vm space
-  procs[i].trapframe = (trapframe *)alloc_page(); //trapframe, used to save context
+  procs[i].trapframe = (trapframe *)alloc_page(); // trapframe, used to save context
   memset(procs[i].trapframe, 0, sizeof(trapframe));
 
   // page directory
   procs[i].pagetable = (pagetable_t)alloc_page();
   memset((void *)procs[i].pagetable, 0, PGSIZE);
 
-  procs[i].kstack = (uint64)alloc_page() + PGSIZE; //user kernel stack top
-  uint64 user_stack = (uint64)alloc_page();        //phisical address of user stack bottom
-  procs[i].trapframe->regs.sp = USER_STACK_TOP;    //virtual address of user stack top
+  procs[i].kstack = (uint64)alloc_page() + PGSIZE; // user kernel stack top
+  uint64 user_stack = (uint64)alloc_page();        // phisical address of user stack bottom
+  procs[i].trapframe->regs.sp = USER_STACK_TOP;    // virtual address of user stack top
 
   // allocates a page to record memory regions (segments)
   procs[i].mapped_info = (mapped_region *)alloc_page();
@@ -160,8 +157,7 @@ process *alloc_process()
 //
 // reclaim a process
 //
-int free_process(process *proc)
-{
+int free_process(process *proc) {
   // we set the status to ZOMBIE, but cannot destruct its vm space immediately.
   // since proc can be current process, and its user kernel stack is currently in use!
   // but for proxy kernel, it (memory leaking) may NOT be a really serious issue,
@@ -178,8 +174,7 @@ int free_process(process *proc)
 // segments (code, system) of the parent to child. the stack segment remains unchanged
 // for the child.
 //
-int do_fork(process *parent)
-{
+int do_fork(process *parent) {
   sprint("will fork a child from parent %d.\n", parent->pid);
   process *child = alloc_process();
 
@@ -204,8 +199,7 @@ int do_fork(process *parent)
       // address region of child to the physical pages that actually store the code
       // segment of parent process.
       // DO NOT COPY THE PHYSICAL PAGES, JUST MAP THEM.
-      //panic( "You need to implement the code segment mapping of child in lab3_1.\n" );
-
+      // panic( "You need to implement the code segment mapping of child in lab3_1.\n" );
       user_vm_map((pagetable_t)child->pagetable, parent->mapped_info[i].va & (-1 << 12), PGSIZE,
                   lookup_pa((pagetable_t)parent->pagetable, parent->mapped_info[i].va), prot_to_type(PROT_EXEC | PROT_READ, 1));
       sprint("do_fork map code segment at pa:%lx of parent to child at va:%lx.\n", lookup_pa((pagetable_t)parent->pagetable, parent->mapped_info[i].va), parent->mapped_info[i].va & (-1 << 12));
@@ -237,52 +231,75 @@ int do_fork(process *parent)
   return child->pid;
 }
 
-int sem_new(int id)
-{
-  int flag = 1;
-  for (int i = 0; i < NPROC; i++) {
-    if (sems[i].id == id) {
-      sems[i].status = BLOCKED;
+process *wait_queue_head = NULL;
 
-      return id;
-    }
+//
+// insert a process, proc, into the END of ready queue.
+//
+void insert_to_wait_queue(process *proc) {
+  // if the queue is empty in the beginning
+  if (wait_queue_head == NULL) {
+    proc->status = BLOCKED;
+    proc->queue_next = NULL;
+    wait_queue_head = proc;
+    return;
   }
-  if (flag) {
-    for (int i = 0; i < NPROC; i++) {
-      if (sems[i].status == FREE) {
-        sems[i].status = BLOCKED;
-        sems[i].id = id;
-      }
+
+  // ready queue is not empty
+  process *p;
+  // browse the ready queue to see if proc is already in-queue
+  for (p = wait_queue_head; p->queue_next != NULL; p = p->queue_next)
+    if (p == proc)
+      return; // already in queue
+
+  // p points to the last element of the ready queue
+  if (p == proc)
+    return;
+  p->queue_next = proc;
+  proc->status = BLOCKED;
+  proc->queue_next = NULL;
+
+  return;
+}
+
+process *get_process_from_wait_queue() {
+  process *ret = wait_queue_head;
+  assert(ret->status == BLOCKED);
+  wait_queue_head = wait_queue_head->queue_next;
+  return ret;
+}
+
+int sem_new(int num) {
+  for (int i = 0; i < NPROC; i++) {
+    if (sems[i].status == FREE) {
+      sems[i].status = BLOCKED;
+      sems[i].S=num;
+      return sems[i].id;
     }
   }
   return -1;
 }
 
-int sem_P(int id)
-{
+int sem_P(int id) {
   sems[id].S--;
   if (sems[id].S >= 0)
     return 0;
   else {
     current->status = BLOCKED;
+    insert_to_wait_queue(current);
     schedule();
     return 1;
   }
 }
 
-int sem_V(int id)
-{
+int sem_V(int id) {
   sems[id].S++;
   if (sems[id].S > 0)
     return 0;
   else {
-    for (int i = 0; i < NPROC; i++) {
-      if (procs[i].status == BLOCKED) {
-        procs[i].status = READY;
-        insert_to_ready_queue(&procs[i]);
-        return 1;
-      }
-    }
-    return -1;
+    process *p = get_process_from_wait_queue();
+    p->status = READY;
+    insert_to_ready_queue(p);
+    return 1;
   }
 }

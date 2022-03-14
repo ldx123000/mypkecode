@@ -68,15 +68,15 @@ ssize_t sys_user_fork() {
   return do_fork( current );
 }
 
-uint64 sys_user_sem_new(uint64 va) {
+ssize_t sys_user_sem_new(uint64 va) {
    return sem_new(va);
 }
 
-uint64 sys_user_sem_P(uint64 va) {
+ssize_t sys_user_sem_P(uint64 va) {
    return sem_P(va);
 }
 
-uint64 sys_user_sem_V(uint64 va) {
+ssize_t sys_user_sem_V(uint64 va) {
    return sem_V(va);
 }
 
@@ -114,6 +114,12 @@ long do_syscall(long a0, long a1, long a2, long a3, long a4, long a5, long a6, l
       return sys_user_fork();
     case SYS_user_yield:
       return sys_user_yield();
+    case SYS_user_sem_new:
+      return sys_user_sem_new(a1);
+    case SYS_user_sem_P:
+      return sys_user_sem_P(a1);
+    case SYS_user_sem_V:
+      return sys_user_sem_V(a1);
     default:
       panic("Unknown syscall %ld \n", a0);
   }
