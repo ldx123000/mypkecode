@@ -86,6 +86,7 @@ int do_fork(process* parent);
 // wait process
 int wait(int pid);
 
+
 // current running process
 extern process* current;
 // virtual address of our simple heap

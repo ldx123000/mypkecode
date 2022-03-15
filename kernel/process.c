@@ -40,8 +40,7 @@ uint64 g_ufree_page = USER_FREE_ADDRESS_START;
 //
 // switch to a user-mode process
 //
-void switch_to(process *proc)
-{
+void switch_to(process *proc) {
   assert(proc);
   current = proc;
 
@@ -75,8 +74,7 @@ void switch_to(process *proc)
 //
 // initialize process pool (the procs[] array)
 //
-void init_proc_pool()
-{
+void init_proc_pool() {
   memset(procs, 0, sizeof(struct process) * NPROC);
 
   for (int i = 0; i < NPROC; ++i) {
@@ -88,8 +86,7 @@ void init_proc_pool()
 //
 // allocate an empty process, init its vm space. returns its pid
 //
-process *alloc_process()
-{
+process *alloc_process() {
   // locate the first usable process structure
   int i;
 
@@ -151,8 +148,7 @@ process *alloc_process()
 //
 // reclaim a process
 //
-int free_process(process *proc)
-{
+int free_process(process *proc) {
   // we set the status to ZOMBIE, but cannot destruct its vm space immediately.
   // since proc can be current process, and its user kernel stack is currently in use!
   // but for proxy kernel, it (memory leaking) may NOT be a really serious issue,
@@ -169,8 +165,7 @@ int free_process(process *proc)
 // segments (code, system) of the parent to child. the stack segment remains unchanged
 // for the child.
 //
-int do_fork(process *parent)
-{
+int do_fork(process *parent) {
   sprint("will fork a child from parent %d.\n", parent->pid);
   process *child = alloc_process();
 
@@ -223,50 +218,45 @@ int do_fork(process *parent)
   child->trapframe->regs.a0 = 0;
   child->parent = parent;
   insert_to_ready_queue(child);
-  
+
   return child->pid;
-  schedule();
 }
 
-int wait(int pid)
-{
-  //sprint("wait!!!!\n");
-for(;;){
-  process *np;
-  int flag = -1;
-  for (np = procs; np < &procs[NPROC]; np++) {
-    if (np != NULL && np->parent != NULL && np->parent == current && np->pid == pid) {
-      current->status = BLOCKED;
-      
-      //insert_to_ready_queue(np);
-      schedule();
-      insert_to_ready_queue(np->parent);
-      //sprint("uuuuuuuuuu\n");
-      flag = 1;
-    }
+int wait(int pid) {
+  // sprint("wait!!!!\n");
+  for (;;) {
+    process *np;
+    int flag = -1;
+    for (np = procs; np < &procs[NPROC]; np++) {
+      if (np != NULL && np->parent != NULL && np->parent == current && np->pid == pid) {
+        current->status = READY;
 
-    else if (np != NULL && np->parent != NULL && np->parent == current) {
-      current->status = BLOCKED;
+        // insert_to_ready_queue(np);
+        
+        insert_to_ready_queue(np->parent);
+        schedule();
+        // sprint("uuuuuuuuuu\n");
+        flag = 1;
+      }
 
-      //insert_to_ready_queue(np);
-      schedule();
-      insert_to_ready_queue(np->parent);
-      flag = 0;
+      else if (np != NULL && np->parent != NULL && np->parent == current) {
+        current->status = READY;
+
+        // insert_to_ready_queue(np);
+        
+        insert_to_ready_queue(np->parent);
+        schedule();
+        flag = 0;
+      }
     }
-    
+    if (flag == -1)
+      return -1;
+    else {
+      sprint("1111111111\n");
+      return np->pid;
+    }
   }
-  if (flag == -1)
-    return -1;
-  else{
-    sprint("1111111111\n");
-    return np->pid;
-  }
-    
-}
-  
-  
-  
-  
-  //insert_to_ready_queue(current);
-  //schedule();
+
+  // insert_to_ready_queue(current);
+  // schedule();
 }
