@@ -233,9 +233,9 @@ int wait(int pid) {
 
         // insert_to_ready_queue(np);
         
-        insert_to_ready_queue(np->parent);
+        //insert_to_ready_queue(np->parent);
         schedule();
-        // sprint("uuuuuuuuuu\n");
+        sprint("uuuuuuuuuu\n");
         flag = 1;
       }
 

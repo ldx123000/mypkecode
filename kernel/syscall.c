@@ -35,6 +35,7 @@ ssize_t sys_user_exit(uint64 code) {
   sprint("User exit with code:%d.\n", code);
   // in lab3 now, we should reclaim the current process, and reschedule.
   free_process( current );
+  //insert_to_ready_queue();
   schedule();
   return 0;
 }
