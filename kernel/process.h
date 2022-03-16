@@ -86,6 +86,8 @@ int do_fork(process* parent);
 // wait process
 int wait(int pid);
 
+process *get_process_from_wait_queue();
+
 
 // current running process
 extern process* current;

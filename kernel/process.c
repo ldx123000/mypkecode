@@ -222,41 +222,78 @@ int do_fork(process *parent) {
   return child->pid;
 }
 
+process *wait_queue_head = NULL;
+
+//
+// insert a process, proc, into the END of ready queue.
+//
+void insert_to_wait_queue(process *proc) {
+  // if the queue is empty in the beginning
+  if (wait_queue_head == NULL) {
+    proc->status = BLOCKED;
+    proc->queue_next = NULL;
+    wait_queue_head = proc;
+    return;
+  }
+
+  // ready queue is not empty
+  process *p;
+  // browse the ready queue to see if proc is already in-queue
+  for (p = wait_queue_head; p->queue_next != NULL; p = p->queue_next)
+    if (p == proc)
+      return; // already in queue
+
+  // p points to the last element of the ready queue
+  if (p == proc)
+    return;
+  p->queue_next = proc;
+  proc->status = BLOCKED;
+  proc->queue_next = NULL;
+
+  return;
+}
+
+process *get_process_from_wait_queue() {
+  if (wait_queue_head == NULL) {
+    return NULL;
+  }
+  process *p, *q;
+  int flag = 0;
+  for (p = wait_queue_head; p->queue_next != NULL; p = p->queue_next) {
+    q = p;
+    flag = 1;
+  }
+  if (flag)
+    q->queue_next = NULL;
+  else
+    wait_queue_head = NULL;
+  assert(p->status == BLOCKED);
+  p->status = READY;
+  return p;
+}
+
 int wait(int pid) {
-  // sprint("wait!!!!\n");
   for (;;) {
     process *np;
     int flag = -1;
     for (np = procs; np < &procs[NPROC]; np++) {
       if (np != NULL && np->parent != NULL && np->parent == current && np->pid == pid) {
-        current->status = READY;
-
-        // insert_to_ready_queue(np);
-        
-        //insert_to_ready_queue(np->parent);
-        schedule();
-        sprint("uuuuuuuuuu\n");
+        current->status = BLOCKED;
+        insert_to_wait_queue(current);
         flag = 1;
-      }
-
-      else if (np != NULL && np->parent != NULL && np->parent == current) {
-        current->status = READY;
-
-        // insert_to_ready_queue(np);
-        
-        insert_to_ready_queue(np->parent);
         schedule();
+      } else if (np != NULL && np->parent != NULL && np->parent == current) {
+        current->status = BLOCKED;
+        insert_to_wait_queue(current);
         flag = 0;
+        schedule();
       }
     }
     if (flag == -1)
       return -1;
     else {
-      sprint("1111111111\n");
       return np->pid;
     }
   }
 
-  // insert_to_ready_queue(current);
-  // schedule();
 }
