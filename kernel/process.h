@@ -84,6 +84,8 @@ int free_process( process* proc );
 // fork a child from parent
 int do_fork(process* parent);
 
+int sharedMemory(int type,int* value,int offset);
+
 // current running process
 extern process* current;
 // virtual address of our simple heap

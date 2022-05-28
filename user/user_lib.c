@@ -76,3 +76,8 @@ int fork() {
 void yield() {
   do_user_call(SYS_user_yield, 0, 0, 0, 0, 0, 0, 0);
 }
+
+
+int shared_memory(int type,int* value,int offset){
+  return do_user_call(SYS_user_sharedMemory,type,(uint64)value, offset, 0, 0, 0, 0);
+}
