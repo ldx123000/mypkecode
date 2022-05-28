@@ -84,7 +84,7 @@ int free_process( process* proc );
 // fork a child from parent
 int do_fork(process* parent);
 
-int sharedMemory(int type,int* value,int offset);
+int sharedMemory(int type,char* value,int offset,int length);
 
 // current running process
 extern process* current;

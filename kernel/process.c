@@ -222,17 +222,26 @@ int do_fork( process* parent)
   return child->pid;
 }
 
-int memory[10];
-int sharedMemory(int type,int* value,int offset){
-
+char memory[100];
+int sharedMemory(int type,char* value,int offset,int length){
+  
   if(type==1){//write
-    *(memory+offset)=*(value);
+    for(int i=0;i<length;i++){
+    *(memory+offset+i)=*(value+i); 
+    }
     current->status=READY;
     insert_to_ready_queue(current);
     schedule();
+    return 1;
+    //sprint("fuckkkkk:%d\n\n",tmp);
   }
+  
   else{//read
-    return *(memory+offset);
+    for(int i=0;i<length;i++){
+    *(value+i)=*(memory+offset+i);
+    return 1;
+    }
+    //sprint("yessssss:%d\n\n",tmp);
   }
   return 0;
 }

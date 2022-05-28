@@ -84,10 +84,10 @@ ssize_t sys_user_yield() {
   return 0;
 }
 
-ssize_t sys_user_sharedMemory(uint64 type,int* value,uint64 offset) {
+ssize_t sys_user_sharedMemory(uint64 type,char* value,uint64 offset,uint64 length) {
   assert( current );
-  int* pa = (int*)user_va_to_pa((pagetable_t)(current->pagetable), (void*)value);
-  int result=sharedMemory(type,pa,offset);
+  char* pa = (char*)user_va_to_pa((pagetable_t)(current->pagetable), (void*)value);
+  int result=sharedMemory(type,pa,offset,length);
   // uint64 va = g_ufree_page;
   // g_ufree_page += PGSIZE;
   // user_vm_map((pagetable_t)current->pagetable, va, PGSIZE, (uint64)res_pa,
@@ -114,7 +114,7 @@ long do_syscall(long a0, long a1, long a2, long a3, long a4, long a5, long a6, l
     case SYS_user_yield:
       return sys_user_yield();
     case SYS_user_sharedMemory:
-      return sys_user_sharedMemory(a1,(int*)a2,a3);
+      return sys_user_sharedMemory(a1,(char*)a2,a3,a4);
     default:
       panic("Unknown syscall %ld \n", a0);
   }
