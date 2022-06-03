@@ -88,10 +88,6 @@ ssize_t sys_user_sharedMemory(uint64 type,char* value,uint64 offset,uint64 lengt
   assert( current );
   char* pa = (char*)user_va_to_pa((pagetable_t)(current->pagetable), (void*)value);
   int result=sharedMemory(type,pa,offset,length);
-  // uint64 va = g_ufree_page;
-  // g_ufree_page += PGSIZE;
-  // user_vm_map((pagetable_t)current->pagetable, va, PGSIZE, (uint64)res_pa,
-  //        prot_to_type(PROT_WRITE | PROT_READ, 1));
   return result;
 }
 
