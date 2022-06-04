@@ -71,13 +71,14 @@ typedef struct process {
 
   // accounting
   int tick_count;
+  
 } process;
 
-typedef struct sem {
-  int status;
-  int id;
-  int S;
-} sem;
+typedef struct spinlock {
+  uint8 locked;
+  char *name;
+  int pid;
+} spinlock;
 
 // switch to run user app
 void switch_to(process *);
@@ -92,9 +93,10 @@ int do_fork(process *parent);
 
 void insert_to_wait_queue(process *proc);
 process *get_process_from_wait_queue();
-int sem_new(int num);
-int sem_P(int id);
-int sem_V(int id);
+
+void init_lock(spinlock *lock, char *name);
+void sleeping(int second);
+void CyclicBarrier(int total);
 
 // current running process
 extern process *current;

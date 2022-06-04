@@ -77,14 +77,7 @@ void yield() {
   do_user_call(SYS_user_yield, 0, 0, 0, 0, 0, 0, 0);
 }
 
-int sem_new(int num){
-  return do_user_call(SYS_user_sem_new, num, 0, 0, 0, 0, 0, 0);
+int cyclicbarrier(int total){
+  return do_user_call(SYS_user_cyclicbarrier, total, 0, 0, 0, 0, 0, 0);
 }
 
-int sem_P(int id){
-  return do_user_call(SYS_user_sem_P, id, 0, 0, 0, 0, 0, 0);
-}
-
-int sem_V(int id){
-  return do_user_call(SYS_user_sem_V, id, 0, 0, 0, 0, 0, 0);
-}

@@ -34,8 +34,7 @@ process *current = NULL;
 // process pool
 process procs[NPROC];
 
-sem sems[NPROC];
-
+spinlock counterlock;
 // start virtual address of our simple heap.
 uint64 g_ufree_page = USER_FREE_ADDRESS_START;
 
@@ -84,12 +83,7 @@ void init_proc_pool() {
     procs[i].pid = i;
   }
 
-  memset(sems, 0, sizeof(struct sem) * NPROC);
-  for (int i = 0; i < NPROC; ++i) {
-    sems[i].id = i;
-    sems[i].status = FREE;
-    sems[i].S = 0;
-  }
+  init_lock(&counterlock,"counterlock");
 }
 
 //
@@ -268,37 +262,69 @@ process *get_process_from_wait_queue() {
   return ret;
 }
 
-int sem_new(int num) {
-  for (int i = 0; i < NPROC; i++) {
-    if (sems[i].status == FREE) {
-      sems[i].status = BLOCKED;
-      sems[i].S=num;
-      return sems[i].id;
-    }
-  }
-  return -1;
+void sleeping(int second) {
+  uint64 rounds = 200000000;
+  uint64 interval = 10000000;
+  for (uint64 i = 0; i < rounds; ++i) 
+      if (i % interval == 0) sprint("Parent running %ld \n", i);
+  return;
 }
 
-int sem_P(int id) {
-  sems[id].S--;
-  if (sems[id].S >= 0)
-    return 0;
-  else {
+int count = 0;
+
+void atomcount() {
+  int tmp = count;
+  //sleeping(2);
+  tmp = tmp + 1;
+  //sleeping(2);
+  count = tmp;
+}
+
+void init_lock(spinlock *lock, char *name) {
+  lock->locked = 0;
+  lock->name = name;
+  lock->pid = -1;
+}
+
+extern int preempt_flag;
+void lock(spinlock *lock) {
+  while (lock->locked == 1) {
+    sleeping(1);
+  }
+  lock->locked == 1;
+  lock->pid = current->pid;
+  preempt_flag = 0;
+}
+
+void unlock(spinlock *lock) {
+  assert(lock->pid == current->pid);
+  lock->locked = 0;
+  lock->pid = -1;
+  preempt_flag = 1;
+}
+
+int release;
+void CyclicBarrier(int total) {
+  lock(&counterlock);
+  if (count == 0)
+    release = 0;
+  atomcount();
+  unlock(&counterlock);
+  if (count == total) {
+    count = 0;
+    
+    process *p=get_process_from_wait_queue();
+    while (p->queue_next != NULL) {
+      p->status = READY;
+      insert_to_ready_queue(p);
+      p=get_process_from_wait_queue();
+    }
+    p->status = READY;
+    insert_to_ready_queue(p);
+
+  } else {
     current->status = BLOCKED;
     insert_to_wait_queue(current);
     schedule();
-    return 1;
-  }
-}
-
-int sem_V(int id) {
-  sems[id].S++;
-  if (sems[id].S > 0)
-    return 0;
-  else {
-    process *p = get_process_from_wait_queue();
-    p->status = READY;
-    insert_to_ready_queue(p);
-    return 1;
   }
 }

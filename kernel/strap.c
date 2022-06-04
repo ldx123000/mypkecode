@@ -66,12 +66,13 @@ void handle_user_page_fault(uint64 mcause, uint64 sepc, uint64 stval) {
 //
 // implements round-robin scheduling
 //
+int preempt_flag=1;
 void rrsched() {
   // TODO (lab3_3): implements round-robin scheduling.
   // hint: increase the tick_count member of current process by one, if it is bigger than
   // TIME_SLICE_LEN (means it has consumed its time slice), change its status into READY,
   // place it in the rear of ready queue, and finally schedule next process to run.
-  if(++current->tick_count>TIME_SLICE_LEN){
+  if(++current->tick_count>TIME_SLICE_LEN&&preempt_flag){
     current->tick_count=0;
     current->status=READY;
     insert_to_ready_queue(current);
