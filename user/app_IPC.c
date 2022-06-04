@@ -1,6 +1,5 @@
 /*
- * The application of lab3_3.
- * parent and child processes never give up their processor during execution.
+ * This app needs to exchage information between parent and child
  */
 
 #include "user/user_lib.h"
