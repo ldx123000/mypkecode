@@ -12,7 +12,13 @@
 #define SYS_user_free_page (SYS_user_base + 3)
 #define SYS_user_fork (SYS_user_base + 4)
 #define SYS_user_yield (SYS_user_base + 5)
-#define SYS_user_cyclicbarrier (SYS_user_base + 6)
+
+#define SYS_user_get_count (SYS_user_base + 6)
+#define SYS_user_set_count (SYS_user_base + 7)
+#define SYS_user_init_lock (SYS_user_base + 8)
+#define SYS_user_lock (SYS_user_base + 9)
+#define SYS_user_unlock (SYS_user_base + 10)
+
 
 long do_syscall(long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7);
 

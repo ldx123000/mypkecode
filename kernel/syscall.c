@@ -68,13 +68,6 @@ ssize_t sys_user_fork() {
   return do_fork( current );
 }
 
-ssize_t sys_user_cyclicbarrier(uint64 va) {
-   CyclicBarrier(va);
-   return 0;
-}
-
-
-
 //
 // kerenl entry point of yield
 //
@@ -88,6 +81,31 @@ ssize_t sys_user_yield() {
   schedule();
   //panic( "You need to implement the yield syscall in lab3_2.\n" );
 
+  return 0;
+}
+
+ssize_t sys_user_get_count() {
+   return getCount();
+}
+
+ssize_t sys_user_set_count(uint64 va) {
+   setCount(va);
+   return 0;
+}
+
+uint64 sys_user_init_lock(char *name) {
+  char* pa = (char*)user_va_to_pa((pagetable_t)(current->pagetable), (void*)name);
+  return init_lock(pa);
+}
+
+
+ssize_t sys_user_lock(int sl) {
+  lock(sl);
+  return 0;
+}
+
+ssize_t sys_user_unlock(int sl) {
+  unlock(sl);
   return 0;
 }
 
@@ -109,8 +127,16 @@ long do_syscall(long a0, long a1, long a2, long a3, long a4, long a5, long a6, l
       return sys_user_fork();
     case SYS_user_yield:
       return sys_user_yield();
-    case SYS_user_cyclicbarrier:
-      return sys_user_cyclicbarrier(a1);
+    case SYS_user_get_count:
+      return sys_user_get_count();
+    case SYS_user_set_count:
+      return sys_user_set_count(a1);
+    case SYS_user_init_lock:
+      return sys_user_init_lock((char*)a1);
+    case SYS_user_lock:
+      return sys_user_lock(a1);
+    case SYS_user_unlock:
+      return sys_user_unlock(a1);
     default:
       panic("Unknown syscall %ld \n", a0);
   }

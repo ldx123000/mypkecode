@@ -11,13 +11,17 @@ int main(void) {
   if (pid == 0) { //子
     pid = fork();
     if (pid == 0) {
-      printu("grandson print %d\n", 0);
+      printu("Process2 print %d\n", 0);
       cyclicbarrier(3);
-      printu("grandson print %d\n", 1);
+      printu("Process2 print %d\n", 1);
+      // cyclicbarrier(2);
+      // printu("Process3 print %d\n", 2);
     } else {
-      printu("son print %d\n", 0);
+      printu("Process1 print %d\n", 0);
       cyclicbarrier(3);
-      printu("son print %d\n", 1);
+      printu("Process1 print %d\n", 1);
+      // // cyclicbarrier(3);
+      // printu("Process1 print %d\n", 2);
     }
     // for (int i = 0; i < 10; i++) {
     //   sem_P(child_sem[pid == 0]); // child_sem[0 or 1]
@@ -28,9 +32,21 @@ int main(void) {
     //     sem_V(main_sem);
     // }
   } else { //父
-    printu("Parent print %d\n", 0);
-    cyclicbarrier(3);
-    pp();
+    
+    // if (pid == 0) {
+    //   printu("Process2 print %d\n", 0);
+
+    //   printu("Process2 print %d\n", 1);
+
+    //   printu("Process2 print %d\n", 2);
+    // } else {
+      printu("Process0 print %d\n", 0);
+      cyclicbarrier(3);
+      printu("Process0 print %d\n", 1);
+      // cyclicbarrier(2);
+      // printu("Process0 print %d\n", 2);
+    // }
+
     // for (int i = 0; i < 10; i++) {
     //   sem_P(main_sem);
     //   printu("Parent print %d\n", i);

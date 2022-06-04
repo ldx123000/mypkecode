@@ -76,7 +76,7 @@ typedef struct process {
 
 typedef struct spinlock {
   uint8 locked;
-  char *name;
+  char name[10];
   int pid;
 } spinlock;
 
@@ -91,12 +91,13 @@ int free_process(process *proc);
 // fork a child from parent
 int do_fork(process *parent);
 
-void insert_to_wait_queue(process *proc);
-process *get_process_from_wait_queue();
-
-void init_lock(spinlock *lock, char *name);
 void sleeping(int second);
 void CyclicBarrier(int total);
+int getCount();
+void setCount(int value);
+int init_lock(char *name);
+void lock(int num);
+void unlock(int num);
 
 // current running process
 extern process *current;

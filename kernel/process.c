@@ -83,7 +83,6 @@ void init_proc_pool() {
     procs[i].pid = i;
   }
 
-  init_lock(&counterlock,"counterlock");
 }
 
 //
@@ -224,107 +223,77 @@ int do_fork(process *parent) {
   return child->pid;
 }
 
-process *wait_queue_head = NULL;
-
-//
-// insert a process, proc, into the END of ready queue.
-//
-void insert_to_wait_queue(process *proc) {
-  // if the queue is empty in the beginning
-  if (wait_queue_head == NULL) {
-    proc->status = BLOCKED;
-    proc->queue_next = NULL;
-    wait_queue_head = proc;
-    return;
-  }
-
-  // ready queue is not empty
-  process *p;
-  // browse the ready queue to see if proc is already in-queue
-  for (p = wait_queue_head; p->queue_next != NULL; p = p->queue_next)
-    if (p == proc)
-      return; // already in queue
-
-  // p points to the last element of the ready queue
-  if (p == proc)
-    return;
-  p->queue_next = proc;
-  proc->status = BLOCKED;
-  proc->queue_next = NULL;
-
-  return;
-}
-
-process *get_process_from_wait_queue() {
-  process *ret = wait_queue_head;
-  assert(ret->status == BLOCKED);
-  wait_queue_head = wait_queue_head->queue_next;
-  return ret;
-}
-
-void sleeping(int second) {
-  uint64 rounds = 200000000;
-  uint64 interval = 10000000;
-  for (uint64 i = 0; i < rounds; ++i) 
-      if (i % interval == 0) sprint("Parent running %ld \n", i);
-  return;
-}
-
 int count = 0;
 
-void atomcount() {
-  int tmp = count;
-  //sleeping(2);
-  tmp = tmp + 1;
-  //sleeping(2);
-  count = tmp;
+int getCount() {
+  return count;
 }
 
-void init_lock(spinlock *lock, char *name) {
-  lock->locked = 0;
-  lock->name = name;
-  lock->pid = -1;
+void setCount(int value) {
+  count = value;
+  return;
+}
+
+spinlock slock[10];
+
+int init_lock(char *name) {
+  for (int i = 0; i < 10; i++) {   
+    if (strlen(slock[i].name) == 0) { // inital   
+      slock[i].locked = 0;
+      strcpy(slock[i].name,name);
+      slock[i].pid = -1;
+      return i;
+    } else if (strcmp(slock[i].name, name) == 0) { // already exist
+      return i;
+    }
+  }
+  return -1;
 }
 
 extern int preempt_flag;
-void lock(spinlock *lock) {
+
+void lock(int num) {
+  spinlock *lock=&slock[num];
   while (lock->locked == 1) {
-    sleeping(1);
+    current->status = READY;
+    insert_to_ready_queue(current);
+    schedule();
   }
-  lock->locked == 1;
+  lock->locked = 1;
   lock->pid = current->pid;
   preempt_flag = 0;
 }
 
-void unlock(spinlock *lock) {
+void unlock(int num) {
+  spinlock *lock=&slock[num];
   assert(lock->pid == current->pid);
   lock->locked = 0;
   lock->pid = -1;
   preempt_flag = 1;
 }
 
-int release;
-void CyclicBarrier(int total) {
-  lock(&counterlock);
-  if (count == 0)
-    release = 0;
-  atomcount();
-  unlock(&counterlock);
-  if (count == total) {
-    count = 0;
-    
-    process *p=get_process_from_wait_queue();
-    while (p->queue_next != NULL) {
-      p->status = READY;
-      insert_to_ready_queue(p);
-      p=get_process_from_wait_queue();
-    }
-    p->status = READY;
-    insert_to_ready_queue(p);
+// int release;
+// void CyclicBarrier(int total) {
+//   lock(&counterlock);
+//   if (count == 0)
+//     release = 0;
+//   atomcount();
+//   unlock(&counterlock);
+//   if (count == total) {
+//     count = 0;
 
-  } else {
-    current->status = BLOCKED;
-    insert_to_wait_queue(current);
-    schedule();
-  }
-}
+//     process *p = get_process_from_wait_queue();
+//     while (p->queue_next != NULL) {
+//       p->status = READY;
+//       insert_to_ready_queue(p);
+//       p = get_process_from_wait_queue();
+//     }
+//     p->status = READY;
+//     insert_to_ready_queue(p);
+
+//   } else {
+//     current->status = BLOCKED;
+//     insert_to_wait_queue(current);
+//     schedule();
+//   }
+// }
