@@ -84,6 +84,11 @@ int free_process( process* proc );
 // fork a child from parent
 int do_fork(process* parent);
 
+typedef struct ref_pa{
+  void* pa;
+  int ref;
+}ref_pa;
+
 // current running process
 extern process* current;
 // virtual address of our simple heap

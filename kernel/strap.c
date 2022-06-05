@@ -51,24 +51,37 @@ void handle_mtimer_trap() {
 // sepc: the pc when fault happens;
 // stval: the virtual address that causes pagefault when being accessed.
 //
+extern ref_pa data_pa[10];
 void handle_user_page_fault(uint64 mcause, uint64 sepc, uint64 stval) {
   sprint("handle_page_fault: %lx\n", stval);
+  int flag = 1;
   switch (mcause) {
-    case CAUSE_STORE_PAGE_FAULT:
-    if(*(page_walk((pagetable_t)current->pagetable, ROUNDDOWN(stval, PGSIZE), 1))& PTE_V){
-      void *pa = alloc_page();
-      memcpy(pa, (void *)lookup_pa(current->pagetable, stval), PGSIZE);
-      user_vm_unmap((pagetable_t)current->pagetable, stval, PGSIZE,0);
-      user_vm_map((pagetable_t)current->pagetable, stval, PGSIZE, (uint64)pa, prot_to_type(PROT_WRITE | PROT_READ, 1));
-      sprint("yes!!!!!!!!!!\n");
-    }else{
-      map_pages((pagetable_t)current->pagetable, stval, 1, (uint64)alloc_page(),
-         prot_to_type(PROT_WRITE | PROT_READ, 1));
+  case CAUSE_STORE_PAGE_FAULT:
+    for (int i = 0; i < 10; i++) {
+      if (data_pa[i].pa == (void *)lookup_pa(current->pagetable, stval), PGSIZE) {
+        if (data_pa[i].ref == 1) {
+          void *pa = (void *)lookup_pa(current->pagetable, stval);
+          user_vm_unmap((pagetable_t)current->pagetable, stval, PGSIZE, 0);
+          user_vm_map((pagetable_t)current->pagetable, stval, PGSIZE, (uint64)pa, prot_to_type(PROT_WRITE | PROT_READ, 1));
+        } else {
+          data_pa[i].ref--;
+          void *pa = alloc_page();
+          memcpy(pa, (void *)lookup_pa(current->pagetable, stval), PGSIZE);
+          user_vm_unmap((pagetable_t)current->pagetable, stval, PGSIZE, 0);
+          user_vm_map((pagetable_t)current->pagetable, stval, PGSIZE, (uint64)pa, prot_to_type(PROT_WRITE | PROT_READ, 1));
+        }
+        flag = 0;
+        break;
+      }
     }
-      break;
-    default:
-      sprint("unknown page fault.\n");
-      break;
+    if (flag) {
+      map_pages((pagetable_t)current->pagetable, stval, 1, (uint64)alloc_page(),
+                prot_to_type(PROT_WRITE | PROT_READ, 1));
+    }
+    break;
+  default:
+    sprint("unknown page fault.\n");
+    break;
   }
 }
 
