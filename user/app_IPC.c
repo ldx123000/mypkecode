@@ -1,4 +1,5 @@
 /*
+ * The application of lab3_challenge3_IPC.
  * This app needs to exchage information between parent and child
  */
 
