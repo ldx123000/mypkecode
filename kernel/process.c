@@ -255,9 +255,7 @@ extern int preempt_flag;
 void lock(int num) {
   spinlock *lock=&slock[num];
   while (lock->locked == 1) {
-    current->status = READY;
-    insert_to_ready_queue(current);
-    schedule();
+
   }
   lock->locked = 1;
   lock->pid = current->pid;
