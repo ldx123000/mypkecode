@@ -1,5 +1,5 @@
 /*
- * This app create two child process.
+ * This app create two child processes.
  * Use cyclicbarrier to control the order of
  * the main process and two child processes print info.
  */
