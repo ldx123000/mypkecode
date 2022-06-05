@@ -172,6 +172,7 @@ int do_fork(process *parent) {
   for (int i = 0; i < parent->total_mapped_region; i++) {
     // browse parent's vm space, and copy its trapframe and data segments,
     // map its code segment.
+    sprint("11111111: %d\n",parent->mapped_info[i].seg_type);
     switch (parent->mapped_info[i].seg_type) {
     case CONTEXT_SEGMENT:
       *child->trapframe = *parent->trapframe;
@@ -203,12 +204,20 @@ int do_fork(process *parent) {
       child->total_mapped_region++;
       break;
     case DATA_SEGMENT:
+      
       child->mapped_info[i].va = parent->mapped_info[i].va;
       for (int j = 0; j < parent->mapped_info[i].npages; j++) {
-        void *pa = alloc_page();
+        
+        //void *pa = alloc_page();
         int va = parent->mapped_info[i].va + PGSIZE * j;
-        memcpy(pa, (void *)lookup_pa(parent->pagetable, va), PGSIZE);
-        user_vm_map((pagetable_t)child->pagetable, va, PGSIZE, (uint64)pa, prot_to_type(PROT_WRITE | PROT_READ, 1));
+        void *pa = (void *)lookup_pa(parent->pagetable, va);
+
+        //void *pa1 = alloc_page();
+        //memcpy(pa1, (void *)lookup_pa(parent->pagetable, va), PGSIZE);
+
+        user_vm_unmap((pagetable_t)parent->pagetable, va, PGSIZE,0);
+        user_vm_map((pagetable_t)parent->pagetable, va, PGSIZE, (uint64)pa, prot_to_type(PROT_READ, 1));
+        user_vm_map((pagetable_t)child->pagetable, va, PGSIZE, (uint64)pa, prot_to_type(PROT_READ, 1));
       }
       break;
     }

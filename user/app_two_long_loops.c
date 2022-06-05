@@ -5,19 +5,33 @@
 
 #include "user/user_lib.h"
 #include "util/types.h"
-
+int a[900]={0};
+int* b;
 int main(void) {
-  int a[1010];
-  int pid=fork();
+  b=(int *)naive_malloc();
+  // int* a=(int *)naive_malloc();
+  a[0]=1;
+  int pid = fork();
   if (pid == 0) {
-    printu("Child's va: %ld \n",a);
-    printu("Child's pa: %ld \n",showpa((void *)a));
-    printu("%d\n",a[0]);
+    printu("Child's va: %ld \n", a);
+    printu("Child's pa: %ld \n", showpa((void *)a));
+    printu("%d\n", a[0]);
+    a[0]=8;
+    printu("Child's va: %ld \n", a);
+    printu("Child's pa: %ld \n", showpa((void *)a));
+    //printu("Child's va: %ld \n", b);
+    //printu("Child's pa: %ld \n", showpa((void *)b));
+    printu("%d\n", a[0]);
   } else {
-    a[0]=2;
-    printu("Parent's va: %ld \n",a);
-    printu("Parent's pa: %ld \n",showpa((void *)a));
-    printu("%d\n",a[0]);
+    printu("Parent's va: %ld \n", a);
+    printu("Parent's pa: %ld \n", showpa((void *)a));
+    printu("%d\n", a[0]);
+    a[0] = 2;
+    printu("Parent's va: %ld \n", a);
+    printu("Parent's pa: %ld \n", showpa((void *)a));
+    //printu("Child's va: %ld \n", b);
+    //printu("Child's pa: %ld \n", showpa((void *)b));
+    printu("%d\n", a[0]);
   }
   exit(0);
   return 0;

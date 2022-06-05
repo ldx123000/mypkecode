@@ -188,7 +188,8 @@ void user_vm_unmap(pagetable_t page_dir, uint64 va, uint64 size, int free) {
   //panic( "You have to implement user_vm_unmap to free pages using naive_free in lab2_2.\n" );
   pte_t* pte = page_walk(page_dir,va, 0);
   void *pa=(void*)(PTE2PA(*pte) + (va & ((1<<PGSHIFT)-1)));
-  free_page(pa);
+  if(free)
+    free_page(pa);
   *pte^=PTE_V;
 }
 

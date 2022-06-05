@@ -13,6 +13,7 @@
 
 #include "spike_interface/spike_utils.h"
 
+#include "string.h"
 //
 // handling the syscalls. will call do_syscall() defined in kernel/syscall.c
 //  
@@ -54,8 +55,16 @@ void handle_user_page_fault(uint64 mcause, uint64 sepc, uint64 stval) {
   sprint("handle_page_fault: %lx\n", stval);
   switch (mcause) {
     case CAUSE_STORE_PAGE_FAULT:
+    if(*(page_walk((pagetable_t)current->pagetable, ROUNDDOWN(stval, PGSIZE), 1))& PTE_V){
+      void *pa = alloc_page();
+      memcpy(pa, (void *)lookup_pa(current->pagetable, stval), PGSIZE);
+      user_vm_unmap((pagetable_t)current->pagetable, stval, PGSIZE,0);
+      user_vm_map((pagetable_t)current->pagetable, stval, PGSIZE, (uint64)pa, prot_to_type(PROT_WRITE | PROT_READ, 1));
+      sprint("yes!!!!!!!!!!\n");
+    }else{
       map_pages((pagetable_t)current->pagetable, stval, 1, (uint64)alloc_page(),
          prot_to_type(PROT_WRITE | PROT_READ, 1));
+    }
       break;
     default:
       sprint("unknown page fault.\n");
