@@ -1,5 +1,6 @@
 /*
- * This app create two child processes.
+ * The application of lab3_challenge4_CyclicBarrier.
+ * This app create two child processes
  * Use cyclicbarrier to control the order of
  * the main process and two child processes print info.
  */
