@@ -7,22 +7,18 @@
 #include "util/types.h"
 
 int main(void) {
-  uint64 pid = fork();
-  uint64 rounds = 100000000;
-  uint64 interval = 10000000;
-  uint64 a = 0;
+  int a[1010];
+  int pid=fork();
   if (pid == 0) {
-    printu("Child: Hello world! \n");
-    for (uint64 i = 0; i < rounds; ++i) {
-      if (i % interval == 0) printu("Child running %ld \n", i);
-    }
+    printu("Child's va: %ld \n",a);
+    printu("Child's pa: %ld \n",showpa((void *)a));
+    printu("%d\n",a[0]);
   } else {
-    printu("Parent: Hello world! \n");
-    for (uint64 i = 0; i < rounds; ++i) {
-      if (i % interval == 0) printu("Parent running %ld \n", i);
-    }
+    a[0]=2;
+    printu("Parent's va: %ld \n",a);
+    printu("Parent's pa: %ld \n",showpa((void *)a));
+    printu("%d\n",a[0]);
   }
-
   exit(0);
   return 0;
 }
