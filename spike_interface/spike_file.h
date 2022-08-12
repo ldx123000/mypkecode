@@ -13,6 +13,9 @@ typedef struct file {
 
 extern spike_file_t spike_files[];
 
+#define MAX_FILES 128
+#define MAX_FDS 128
+
 #define O_RDONLY 00
 #define O_WRONLY 01
 #define O_RDWR 02
