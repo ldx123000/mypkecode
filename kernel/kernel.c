@@ -11,6 +11,7 @@
 #include "sched.h"
 #include "memlayout.h"
 #include "spike_interface/spike_utils.h"
+#include "file.h"
 
 //
 // trap_sec_start points to the beginning of S-mode trap segment (i.e., the entry point of
@@ -64,6 +65,9 @@ int s_start(void) {
   sprint("kernel page table is on \n");
 
   init_proc_pool();
+
+  // then init file system
+  fs_init();
 
   // the application code (elf) is first loaded into memory, and then put into execution
   sprint("Switch to user mode...\n");

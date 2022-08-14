@@ -76,3 +76,31 @@ int fork() {
 void yield() {
   do_user_call(SYS_user_yield, 0, 0, 0, 0, 0, 0, 0);
 }
+
+//
+// lib call to open
+//
+int open(const char *path, int flags) {
+  return do_user_call(SYS_user_open, (uint64)path, flags, 0, 0, 0, 0, 0);
+}
+
+//
+// lib call to read
+//
+int read1(int fd, void * buf, uint64 count){
+  return do_user_call(SYS_user_read, fd, (uint64)buf, count, 0, 0, 0, 0);
+}
+
+//
+// lib call to write
+//
+int write1(int fd, void *buf, uint64 count) {
+  return do_user_call(SYS_user_write, fd, (uint64)buf, count, 0, 0, 0, 0);
+}
+
+//
+// lib call to close
+//
+int close(int fd) {
+  return do_user_call(SYS_user_close, fd, 0, 0, 0, 0, 0, 0);
+}

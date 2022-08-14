@@ -68,10 +68,6 @@ void spike_file_incref(spike_file_t* f) {
   kassert(prev > 0);
 }
 
-ssize_t spike_file_write(spike_file_t* f, const void* buf, size_t size) {
-  return frontend_syscall(HTIFSYS_write, f->kfd, (uint64)buf, size, 0, 0, 0, 0);
-}
-
 static spike_file_t* spike_file_get_free(void) {
   for (spike_file_t* f = spike_files; f < spike_files + MAX_FILES; f++)
     if (atomic_read(&f->refcnt) == 0 && atomic_cas(&f->refcnt, 0, INIT_FILE_REF) == 0)
@@ -125,6 +121,28 @@ ssize_t spike_file_read(spike_file_t* f, void* buf, size_t size) {
   return frontend_syscall(HTIFSYS_read, f->kfd, (uint64)buf, size, 0, 0, 0, 0);
 }
 
+ssize_t spike_file_write(spike_file_t* f, void* buf, size_t size) {
+  return frontend_syscall(HTIFSYS_write, f->kfd, (uint64)buf, size, 0, 0, 0, 0);
+}
+ssize_t spike_file_pwrite(spike_file_t* f, void* buf, size_t size) {
+  return frontend_syscall(HTIFSYS_pwrite, f->kfd, (uint64)buf, size, 0, 0, 0, 0);
+}
+
 ssize_t spike_file_lseek(spike_file_t* f, size_t ptr, int dir) {
   return frontend_syscall(HTIFSYS_lseek, f->kfd, ptr, dir, 0, 0, 0, 0);
+}
+
+spike_file_t* spike_file_get(int fd) {
+  spike_file_t* f;
+  if (fd < 0 || fd >= MAX_FDS || (f = atomic_read(&spike_fds[fd])) == NULL)
+    return 0;
+
+  long old_cnt;
+  do {
+    old_cnt = atomic_read(&f->refcnt);
+    if (old_cnt == 0)
+      return 0;
+  } while (atomic_cas(&f->refcnt, old_cnt, old_cnt+1) != old_cnt);
+
+  return f;
 }

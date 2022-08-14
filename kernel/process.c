@@ -18,6 +18,9 @@
 #include "sched.h"
 #include "spike_interface/spike_utils.h"
 
+#include "file.h"
+#include "hostfs.h"
+
 //Two functions defined in kernel/usertrap.S
 extern char smode_trap_vector[];
 extern void return_to_user(trapframe *, uint64 satp);
@@ -140,6 +143,16 @@ process* alloc_process() {
     procs[i].trapframe, procs[i].trapframe->regs.sp, procs[i].kstack);
 
   procs[i].total_mapped_region = 3;
+
+  // initialize files_struct
+  procs[i].filesp = files_struct_init();
+
+  int fd=host_open("user/2.txt",0);
+  char buf[100]="kkkk",buf2[100];
+  host_write(fd,buf,100);
+  host_read(fd,buf,100);
+  sprint("%s\n\n\n",buf);
+
   // return after initialization.
   return &procs[i];
 }

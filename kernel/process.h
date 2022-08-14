@@ -71,6 +71,9 @@ typedef struct process {
 
   // accounting
   int tick_count;
+
+  // the file related info(pwd, files_count, files_array, fs_semaphore) of process
+  struct files_struct * filesp;
 }process;
 
 // switch to run user app
