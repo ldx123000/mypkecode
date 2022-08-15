@@ -9,6 +9,7 @@
 // pfs_init: called by fs_init
 //
 void pfs_init(void) {
+  panic("You need to implement the pfs_read function in lab5_3 here.\n");
   int ret;
   if ((ret = pfs_mount("Disk_D")) != 0)
     panic("failed: pfs: pfs_mount: %d.\n", ret);
@@ -213,6 +214,7 @@ int pfs_read(inode *node, char *buf) {
 
   uint64 len=strlen(buf);
   len = MIN(len, din->size);
+
   char bio[len + 1];
 
   int offset = 0, i = 0;
@@ -240,7 +242,7 @@ int pfs_write(struct inode *node, char *buf) {
 
   din->size = (strlen(buf) + 1) * sizeof(char);
   uint64 len=strlen(buf);
-  
+
   // write data
   int total = len / PFS_BLKSIZE;
   int remain = len % PFS_BLKSIZE;
