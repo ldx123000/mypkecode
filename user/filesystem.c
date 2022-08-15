@@ -1,6 +1,6 @@
 /*
- * The application of lab3_3.
- * parent and child processes never give up their processor during execution.
+ * Below is the given application for lab5_3.
+ * The goal of this app is to get correct information by using function fputs,fgets. 
  */
 
 #include "user/user_lib.h"
@@ -11,55 +11,29 @@
 
 int main(int argc, char *argv[]) {
   int fd;
-  int MAXBUF = 503;
-  char buf[MAXBUF],buf2[MAXBUF];
-  strcpy(buf,"111111");
+  char buf[64],buf2[64];
+  strcpy(buf,"this is a message!\n");
 
-
-
-  printu("\n======== Case 2 ========\n");
-  printu("write: \"ramdisk0:/ramfile\"\n");
-  printu("========================\n");
-
-  fd = open("Disk_D:/d/ramfile", O_RDWR|O_CREATE);
-  printu("file descriptor fd: %d\n", fd);
-  //write1(fd, buf2, strlen(buf2)+1);
-  write1(fd, buf, strlen(buf)+1);
+  fd = open("Disk_D:/files", O_RDWR|O_CREATE);
+  fputs(buf, fd);
   printu("write content: \n%s\n", buf);
   close(fd);
 
-  printu("\n======== Case 3 ========\n");
-  printu("read: \"ramdisk0:/ramfile\"\n");
-  printu("========================\n");
-  
-  fd = open("Disk_D:/d/ramfile", O_RDWR);
-  printu("file descriptor fd: %d\n", fd);
-  read1(fd, buf2, MAXBUF);
+  fd = open("Disk_D:/files", O_RDONLY);
+  fgets(buf2, fd);
   printu("read content: \n%s\n", buf);
   close(fd);
-  printu("\nAll tests passed!\n\n");
 
-   printu("\n======== Case 0 ========\n");
-  printu("write: \"ramdisk0:/ramfile\"\n");
-  printu("========================\n");
-
+  strcpy(buf,"hello world!\n");
   fd = open("Disk_1:/d/file", O_RDWR|O_CREATE);
-  printu("file descriptor fd: %d\n", fd);
-  //write1(fd, buf2, strlen(buf2)+1);
-  write1(fd, buf, strlen(buf)+1);
+  fputs(buf, fd);
   printu("write content: \n%s\n", buf);
   close(fd);
 
-  printu("\n======== Case 1 ========\n");
-  printu("read: \"ramdisk0:/ramfile\"\n");
-  printu("========================\n");
-  
-  fd = open("Disk_1:/d/file", O_RDWR);
-  printu("file descriptor fd: %d\n", fd);
-  read1(fd, buf2, MAXBUF);
+  fd = open("Disk_1:/d/file", O_RDONLY);
+  fgets(buf2, fd);
   printu("read content: \n%s\n", buf);
   close(fd);
-  printu("\nAll tests passed!\n\n");
 
   exit(0);
   return 0;

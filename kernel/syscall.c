@@ -97,33 +97,19 @@ ssize_t sys_user_open(char *pathva, int flags) {
 //
 // read file
 //
-ssize_t sys_user_read(int fd, char *bufva, uint64 count) {
-  int i = 0;
-  while (i < count) { // count can be greater than page size
-    uint64 addr = (uint64)bufva + i;
-    uint64 pa = lookup_pa((pagetable_t)current->pagetable, addr);
-    uint64 off = addr - ROUNDDOWN(addr, PGSIZE);
-    uint64 len = count - i < PGSIZE - off ? count - i : PGSIZE - off;
-    uint64 r = file_read(fd, (char *)pa + off, len);
-    i += r; if (r < len) return i;
-  }
-  return count;
+ssize_t sys_user_read(int fd, char *va) {
+  uint64 pa = lookup_pa((pagetable_t)current->pagetable, va);
+  file_read(fd, (char *)pa);
+  return 0;
 }
 
 //
 // write file
 //
-ssize_t sys_user_write(int fd, char *bufva, uint64 count) {
-  int i = 0;
-  while (i < count) { // count can be greater than page size
-    uint64 addr = (uint64)bufva + i;
-    uint64 pa = lookup_pa((pagetable_t)current->pagetable, addr);
-    uint64 off = addr - ROUNDDOWN(addr, PGSIZE);
-    uint64 len = count - i < PGSIZE - off ? count - i : PGSIZE - off;
-    uint64 r = file_write(fd, (char *)pa + off, len);
-    i += r; if (r < len) return i;
-  }
-  return count;
+ssize_t sys_user_write(int fd, char *va) {
+  uint64 pa = lookup_pa((pagetable_t)current->pagetable, va);
+  file_write(fd, (char *)pa);
+  return 0;
 }
 
 //
@@ -154,9 +140,9 @@ long do_syscall(long a0, long a1, long a2, long a3, long a4, long a5, long a6, l
     case SYS_user_open:
       return sys_user_open((char *)a1, a2);
     case SYS_user_read:
-      return sys_user_read(a1, (char *)a2, a3);
+      return sys_user_read((char *)a1, a2);
     case SYS_user_write:
-      return sys_user_write(a1, (char *)a2, a3);
+      return sys_user_write((char *)a1, a2);
     case SYS_user_close:
       return sys_user_close(a1);
     default:
