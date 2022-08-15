@@ -1,10 +1,9 @@
 #ifndef _VFS_H_
 #define _VFS_H_
 
-#include "file.h"
-#include "hostfs.h"
-#include "rfs.h"
 #include "dev.h"
+#include "file.h"
+#include "pfs.h"
 #include "util/types.h"
 
 // inode type
@@ -13,19 +12,19 @@
 #define T_DIR 0x2
 #define T_FILE 0x3
 
-// the maximum number of vfs_dev_list
-#define MAX_DEV 10
+#define MAX_DEV 10     // the maximum number of vfs_dev_list
+#define MAX_DEVNAME 32 // the maximum length of devname
 
-// inode flags
-#define I_BUSY 0x1
-#define I_VALID 0x2
+// // inode flags
+// #define I_BUSY 0x1
+// #define I_VALID 0x2
 
 /*
  * Reference: uCore
  * Abstract filesystem. (Or device accessible as a file.)
  *
  * Information:
- *      fs_info   : filesystem-specific data (rfs_fs)
+ *      fs_info   : filesystem-specific data (pfs_fs)
  *      fs_type   : filesystem type
  * Operations:
  *      fs_sync       - Flush all dirty buffers to disk.
@@ -45,8 +44,8 @@
 /*
  * VFS 层的文件系统抽象
  * struct fs:
- *        union { struct rfs_fs rfs_info } fs_info: 给具体文件系统实现的结构体空间
- *        fs_type: 确定使用的是哪个具体文件系统 (RFS_TYPE)
+ *        union { struct pfs_fs pfs_info } fs_info: 给具体文件系统实现的结构体空间
+ *        fs_type: 确定使用的是哪个具体文件系统 (PFS_TYPE)
  *    function:
  *        fs_sync:
  *        fs_get_root: 指向具体文件系统实现访问根inode的函数
@@ -55,15 +54,14 @@
  */
 typedef struct fs {
   union {
-    struct rfs_fs __RFS_TYPE_info;
+    struct pfs_fs __PFS_TYPE_info;
   } fs_info;   // filesystem-specific data
   int fs_type; // filesystem type
 
-  int (*fs_sync)(struct fs *fs);               // Flush all dirty buffers to disk
   struct inode *(*fs_get_root)(struct fs *fs); // Return root inode of filesystem.
   int (*fs_unmount)(struct fs *fs);            // Attempt unmount of filesystem.
   void (*fs_cleanup)(struct fs *fs);           // Cleanup of filesystem.
-}fs;
+} fs;
 
 // virtual file system interfaces
 #define fsop_info(fs, type) &(fs->fs_info.__##type##_info)
@@ -71,23 +69,15 @@ typedef struct fs {
 
 typedef struct inode {
   union {
-    struct rfs_dinode __RFS_TYPE_inode_info;
-    /*
-     * struct rfs_dinode
-     *    int size;               // size of the file (in bytes)
-     *    int type;               // one of T_FREE, T_DEV, T_FILE, T_DIR
-     *    int nlinks;             // # of hard links to this file
-     *    int blocks;             // # of blocks
-     *    int addrs[RFS_NDIRECT]; // direct blocks
-     */
+    device __device_info;
+    pfs_dinode __PFS_TYPE_inode_info;
   } in_info;
   int in_type;
-
   int inum;                       // inode number on-disk
   int ref;                        // reference count
   struct fs *in_fs;               // file system
   const struct inode_ops *in_ops; // inode options
-}inode;
+} inode;
 
 // virtual file system inode interfaces
 #define vop_info(inode, type) &(inode->in_info.__##type##_inode_info)
@@ -114,7 +104,7 @@ typedef struct inode_ops {
   int (*vop_create)(struct inode *node, const char *name, struct inode **node_store);
   int (*vop_lookup)(struct inode *node, char *path, struct inode **node_store);
   // int (*vop_ioctl)(struct inode *node, int op, void *data);
-}inode_ops;
+} inode_ops;
 
 //
 // device info entry in vdev_list
@@ -124,7 +114,7 @@ typedef struct vfs_dev_t {
   int listidx;         // the index for the device in the vfs device list
   struct device *dev;  // the pointer to the device (dev.h)
   struct fs *fs;       // the file system mounted to the device
-}vfs_dev_t;
+} vfs_dev_t;
 
 extern vfs_dev_t *vdev_list[MAX_DEV]; // device info list in vfs layer
 
@@ -140,11 +130,11 @@ extern vfs_dev_t *vdev_list[MAX_DEV]; // device info list in vfs layer
 fs *alloc_fs(int fs_type);
 inode *alloc_inode(int in_type);
 
-int vfs_mount(const char *devname, int (*mountfunc)(device *dev,fs **vfs_fs));
+int vfs_mount(const char *devname, int (*mountfunc)(device *dev, fs **vfs_fs));
 
-int vfs_get_root(const char *devname,inode **root_store);
+int vfs_get_root(const char *devname, inode **root_store);
 
-int vfs_open(char *path, int flags,inode **inode_store);
+int vfs_open(char *path, int flags, inode **inode_store);
 int vfs_close(inode *node);
 // int vfs_link(char *old_path, char *new_path);
 // int vfs_symlink(char *old_path, char *new_path);

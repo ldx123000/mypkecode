@@ -3,8 +3,6 @@
 #include "spike_interface/spike_utils.h"
 #include "util/string.h"
 
-#include "hostfs.h"
-
 struct vfs_dev_t *vdev_list[MAX_DEV]; // device info list in vfs layer
 
 //
@@ -47,7 +45,7 @@ int vfs_mount(const char *devname, int (*mountfunc)(struct device *dev, struct f
 }
 
 //
-// vfs_open
+// get an inode from given path
 //
 int vfs_open(char *path, int open_flags, struct inode **inode_store) {
   // get open_flags
@@ -65,32 +63,30 @@ int vfs_open(char *path, int open_flags, struct inode **inode_store) {
   // }
 
   // lookup the path, and create an related inode
-  struct inode *node;
+  inode *node;
   int ret = vfs_lookup(path, &node);
 
   // the path belongs to the host device
   if (ret == -1) {
-    int kfd = host_open(path, open_flags);
+    int kfd = sys_open(path, open_flags);
     return kfd;
   }
-  // Case 2.1: if the path belongs to the PKE device and the file already exists
-  //    continue
-  // Case 2.2: if the file doesn't exists
-  if (ret == 1) {
-    // Case 2.2.1: the file cannot be created, exit
+
+  //if the path belongs to the PKE files device
+  if (ret == 1) {//file doesn't exists(ret==1)
     if (creatable == 0)
-      panic("vfs_open: open a non-existent-uncreatable file!\n");
+      panic("uncreatable file!\n");
 
     // Case 2.2.2: create a file, and get its inode
     char *filename;    // file name
-    struct inode *dir; // dir inode
+    inode *dir; // dir inode
     // find the directory of the path
     if (vfs_lookup_parent(path, &dir, &filename) != 0)
-      panic("vfs_open: failed to lookup parent!\n");
+      panic("failed to lookup parent!\n");
 
     // create a file in the directory
     if (vop_create(dir, filename, &node) != 0)
-      panic("vfs_open: failed to create file!\n");
+      panic("failed to create file!\n");
   }
 
   ++node->ref;
@@ -100,21 +96,38 @@ int vfs_open(char *path, int open_flags, struct inode **inode_store) {
   return 0;
 }
 
+/*
+ * lookup the directory of the given path
+ * @param path:       the path must be in the format of device:path
+ * @param node_store: store the directory inode
+ * @param fn:         file name
+ */
+int vfs_lookup_parent(char *path, struct inode **node_store, char **filename) {
+  struct inode *dir;
+  int ret = get_device(path, filename, &dir); // get file name
+
+  if (ret == -1)
+    panic("vfs_lookup_parent: unexpectedly lead to host device!\n");
+
+  *node_store = dir; // get dir inode
+  return 0;
+}
+
 //
 // lookup the path
 //
 int vfs_lookup(char *path, struct inode **node_store) {
   struct inode *dir;
   int ret = get_device(path, &path, &dir);
-  // Case 1: use host device file system
+  // host device file system
   if (ret == -1) {
     *node_store = NULL;
     return -1;
   }
-  // Case 2: use PKE file system, dir: device root-dir-inode
+  // PKE file's system, dir: device root-dir-inode
   // device:/.../...
 
-  // given root-dir-inode, find the file-inode in $path
+  // given root-dir-inode, find the inode
   ret = vop_lookup(dir, path, node_store);
   return ret;
 }
@@ -131,7 +144,6 @@ int vfs_lookup(char *path, struct inode **node_store) {
  *    else:   save device root-dir-inode into node_store
  */
 int get_device(char *path, char **subpath, struct inode **node_store) {
-
   int colon = -1;
   //scan the path
   for (int i = 0; path[i] != '\0'; ++i) {
@@ -140,16 +152,16 @@ int get_device(char *path, char **subpath, struct inode **node_store) {
       break;
     }
   }
-  // Case 2: the host device is used by default
+  // the host device is used by default
   if (colon < 0) {
     *subpath = path;
     *node_store = NULL;
     return -1;
   }
 
-  // Case 1: find the root node of the device in the vdev_list
+  // find the root node of the device in the vdev_list
   // get device name
-  char devname[32];
+  char devname[MAX_DEVNAME];
   path[colon] = '\0'; //device:/filename -> devname=decive
   strcpy(devname, path);
   path[colon] = ':';
@@ -159,43 +171,24 @@ int get_device(char *path, char **subpath, struct inode **node_store) {
 }
 
 //
-// vfs_get_root
+// try to get root inode by devname
 //
-int vfs_get_root(const char *devname, struct inode **root_store) {
+int vfs_get_root(const char *devname, inode **root_store) {
   vfs_dev_t *devp=NULL;
-  // find the device entry in vfs_device_list(vdev_list) named devname
+  // find the device entry in vfs_device_list
   for (int i = 0; i < MAX_DEV; i++) {
     if (strcmp(vdev_list[i]->devname, devname) == 0) {
       devp = vdev_list[i];
       break;
     }
   }
-  
   if (devp == NULL)
-    panic("vfs_get_root: Cannot find the device entry!\n");
+    panic("no device entry meets demands!\n");
 
   // call fs.fs_get_root()
-  struct inode *rootdir = fsop_get_root(devp->fs);
+  inode *rootdir = fsop_get_root(devp->fs);
   if (rootdir == NULL)
-    panic("vfs_get_root: failed to get root dir inode!\n");
+    panic("failed to get root dir inode!\n");
   *root_store = rootdir;
-  return 0;
-}
-
-/*
- * lookup the directory of the given path
- * @param path:       the path must be in the format of device:path
- * @param node_store: store the directory inode
- * @param fn:         file name
- */
-int vfs_lookup_parent(char *path, struct inode **node_store, char **filename) {
-  int ret;
-  struct inode *dir;
-  ret = get_device(path, filename, &dir); // get file name
-
-  if (ret == -1)
-    panic("vfs_lookup_parent: unexpectedly lead to host device!\n");
-
-  *node_store = dir; // get dir inode
   return 0;
 }

@@ -17,7 +17,7 @@ int index = 0;
 //
 int disk_input(void *buffer, int blkno) {
   if (blkno < 0 || blkno >= BLOCKS)
-    panic("RAM Disk0: input block No out of range!\n");
+    panic("input out of range!\n");
   void *dst = (void *)((uint64)RAMDISK0_BASE_ADDR + blkno * BLOCKSIZE);
   memcpy(dst, buffer, BLOCKSIZE);
   return 0;
@@ -29,7 +29,7 @@ int disk_input(void *buffer, int blkno) {
 //
 int disk_output(void *buffer, int blkno) {
   if (blkno < 0 || blkno >= BLOCKS)
-    panic("RAM Disk0: input block No out of range!\n");
+    panic("output out of range!\n");
   void *src = (void *)((uint64)RAMDISK0_BASE_ADDR + blkno * BLOCKSIZE);
   memcpy(buffer, src, BLOCKSIZE);
   return 0;

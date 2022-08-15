@@ -22,7 +22,7 @@ int file_close(int fd);
 
 void fs_init(void);
 
-struct file {
+typedef struct file {
   enum {
     FD_HOST,
     FD_NONE,
@@ -35,7 +35,7 @@ struct file {
   int off;            // offset
   int refcnt;         // reference count
   struct inode *node; // inode
-};
+}file;
 
 struct fstat {
   int st_mode;   // protection mode and file type
@@ -50,9 +50,8 @@ struct fstat {
 // void fd_array_dup(struct file *to, struct file *from);
 // bool file_testfd(int fd, bool readable, bool writable);
 
-// ///////////////////////////////////
-// Files struct in PCB
-// ///////////////////////////////////
+// current running process
+extern process *current;
 
 typedef struct files_struct {
   struct inode *pwd;               // inode of present working directory
@@ -63,7 +62,9 @@ typedef struct files_struct {
 files_struct *files_struct_init(void);
 void files_destroy(struct files_struct *filesp);
 
-// current running process
-extern process *current;
+int sys_open(char *pathname, int flags);
+int sys_read(int fd, char *buf, uint64 count);
+int sys_write(int fd, char *buf, uint64 count);
+int sys_close(int fd);
 
 #endif

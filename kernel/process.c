@@ -19,7 +19,6 @@
 #include "spike_interface/spike_utils.h"
 
 #include "file.h"
-#include "hostfs.h"
 
 //Two functions defined in kernel/usertrap.S
 extern char smode_trap_vector[];
@@ -146,12 +145,6 @@ process* alloc_process() {
 
   // initialize files_struct
   procs[i].filesp = files_struct_init();
-
-  int fd=host_open("user/2.txt",0);
-  char buf[100]="kkkk",buf2[100];
-  host_write(fd,buf,100);
-  host_read(fd,buf,100);
-  sprint("%s\n\n\n",buf);
 
   // return after initialization.
   return &procs[i];

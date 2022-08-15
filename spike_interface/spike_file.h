@@ -1,13 +1,13 @@
 #ifndef _SPIKE_FILE_H_
 #define _SPIKE_FILE_H_
 
-#include <unistd.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "util/types.h"
 
 typedef struct file_t {
-  int kfd;  // file descriptor of the host file
+  int kfd; // file descriptor of the host file
   uint32 refcnt;
 } spike_file_t;
 
@@ -19,7 +19,7 @@ extern spike_file_t spike_files[];
 #define O_RDONLY 00
 #define O_WRONLY 01
 #define O_RDWR 02
-#define O_CREATE  0x200
+#define O_CREATE 0x200
 #define ENOMEM 12 /* Out of memory */
 
 #define stdin (spike_files + 0)
@@ -51,20 +51,21 @@ struct frontend_stat {
   uint32 __unused5;
 };
 
-void copy_stat(struct stat* dest, struct frontend_stat* src);
-spike_file_t* spike_file_open(const char* fn, int flags, int mode);
-int spike_file_close(spike_file_t* f);
-spike_file_t* spike_file_openat(int dirfd, const char* fn, int flags, int mode);
-ssize_t spike_file_lseek(spike_file_t* f, size_t ptr, int dir);
-ssize_t spike_file_read(spike_file_t* f, void* buf, size_t size);
-ssize_t spike_file_pread(spike_file_t* f, void* buf, size_t n, off_t off);
-ssize_t spike_file_write(spike_file_t* f, void* buf, size_t n);
-ssize_t spike_file_pwrite(spike_file_t* f, void* buf, size_t n);
-void spike_file_decref(spike_file_t* f);
+void copy_stat(struct stat *dest, struct frontend_stat *src);
+spike_file_t *spike_file_open(const char *fn, int flags, int mode);
+int spike_file_close(spike_file_t *f);
+spike_file_t *spike_file_openat(int dirfd, const char *fn, int flags, int mode);
+ssize_t spike_file_lseek(spike_file_t *f, size_t ptr, int dir);
+ssize_t spike_file_read(spike_file_t *f, void *buf, size_t size);
+ssize_t spike_file_pread(spike_file_t *f, void *buf, size_t n, off_t off);
+ssize_t spike_file_write(spike_file_t *f, const void *buf, size_t n);
+ssize_t spike_file_pwrite(spike_file_t *f, const void *buf, size_t n, off_t off);
+void spike_file_decref(spike_file_t *f);
 void spike_file_init(void);
-int spike_file_dup(spike_file_t* f);
-int spike_file_truncate(spike_file_t* f, off_t len);
-int spike_file_stat(spike_file_t* f, struct stat* s);
-spike_file_t* spike_file_get(int fd);
+int spike_file_dup(spike_file_t *f);
+int spike_file_truncate(spike_file_t *f, off_t len);
+int spike_file_stat(spike_file_t *f, struct stat *s);
+spike_file_t *spike_file_get(int fd);
+int spike_fd_close(int fd);
 
 #endif
