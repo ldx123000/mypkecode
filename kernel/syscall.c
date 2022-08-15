@@ -97,8 +97,8 @@ ssize_t sys_user_open(char *pathva, int flags) {
 //
 // read file
 //
-ssize_t sys_user_read(int fd, char *va) {
-  uint64 pa = lookup_pa((pagetable_t)current->pagetable, va);
+ssize_t sys_user_read(char *va,int fd ) {
+  uint64 pa = lookup_pa((pagetable_t)current->pagetable, (uint64)va);
   file_read(fd, (char *)pa);
   return 0;
 }
@@ -106,8 +106,8 @@ ssize_t sys_user_read(int fd, char *va) {
 //
 // write file
 //
-ssize_t sys_user_write(int fd, char *va) {
-  uint64 pa = lookup_pa((pagetable_t)current->pagetable, va);
+ssize_t sys_user_write(char *va,int fd ) {
+  uint64 pa = lookup_pa((pagetable_t)current->pagetable, (uint64)va);
   file_write(fd, (char *)pa);
   return 0;
 }
