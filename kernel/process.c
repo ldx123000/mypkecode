@@ -18,7 +18,7 @@
 #include "sched.h"
 #include "spike_interface/spike_utils.h"
 
-#include "file.h"
+#include "filesystem.h"
 
 //Two functions defined in kernel/usertrap.S
 extern char smode_trap_vector[];

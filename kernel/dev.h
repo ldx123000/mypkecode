@@ -8,7 +8,7 @@
 #define BLOCKSIZE PGSIZE // size of one block we define
 
 //
-// device abstract
+// device struct
 //
 typedef struct device {
   int d_blocks;                                                      // sum of blocks
@@ -17,13 +17,10 @@ typedef struct device {
   int (*d_io)(struct device *dev, int blkno, void *iob, bool write); // device io
 } device;
 
+#define dev_op_io(dev, blkno, iob, write) ((dev)->d_io(dev, blkno, iob, write))
+
 void dev_init(void);
 int disk_io(device *dev, int blkno, void *iob, bool write);
 void dev_end(char *devname, device *dev);
-
-// #define dop_open(dev, open_flags)           ((dev)->d_open(dev, open_flags))
-// #define dop_close(dev)                      ((dev)->d_close(dev))
-#define dev_op_io(dev, blkno, iob, write) ((dev)->d_io(dev, blkno, iob, write))
-// #define dop_ioctl(dev, op, data)            ((dev)->d_ioctl(dev, op, data))
 
 #endif

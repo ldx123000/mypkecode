@@ -14,7 +14,7 @@
 #include "vmm.h"
 #include "sched.h"
 
-#include "file.h"
+#include "filesystem.h"
 
 #include "spike_interface/spike_utils.h"
 

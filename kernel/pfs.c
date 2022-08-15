@@ -10,7 +10,9 @@
 //
 void pfs_init(void) {
   int ret;
-  if ((ret = pfs_mount("ramdisk0")) != 0)
+  if ((ret = pfs_mount("Disk_D")) != 0)
+    panic("failed: pfs: pfs_mount: %d.\n", ret);
+  if ((ret = pfs_mount("Disk_1")) != 0)
     panic("failed: pfs: pfs_mount: %d.\n", ret);
 }
 
@@ -18,168 +20,98 @@ int pfs_mount(const char *devname) {
   return vfs_mount(devname, pfs_do_mount);
 }
 
-/*
- * Mount VFS(struct fs)-pfs(struct pfs_fs)-RAM Device(struct device)
- *
- * ******** pfs MEM LAYOUT (112 BLOCKS) ****************
- *   super  |  inodes  |  bitmap  |  free blocks  *
- *     1 block   |    10    |     1    |     100       *
- * *****************************************************
- */
+//
+// Mount pfs struct
+//
 int pfs_do_mount(device *dev, fs **vfs_fs) {
-  /*
-   * 1. alloc fs structure
-   * struct fs (vfs.h):
-   *        union { struct pfs_fs pfs_info } fs_info: pfs_fs
-   *        fs_type:  pfs (=0)
-   *    function:
-   *        fs_sync
-   *        fs_get_root
-   *        fs_unmount
-   *        fs_cleanup
-   */
-  fs *fs = alloc_fs(PFS_TYPE); // set fs_type
-  /*
-   * 2. alloc pfs_fs structure
-   * struct pfs_fs (pfs.h):
-   *      super:    super
-   *      dev:      the pointer to the device (struct device * in dev.h)
-   *      freemap:  a block of bitmap (free: 0; used: 1)
-   *      dirty:    true if super/freemap modified
-   *      buffer:   buffer for non-block aligned io
-   */
-  pfs_fs *pfsp = fs_op_info(fs, PFS_TYPE);
 
-  // 2.1. set [pfsp->dev] & [pfsp->dirty]
+  // alloc fs in memory
+  fs *fs = alloc_fs(PFS_TYPE); // set fs_type
+
+  // set pfs_fs in fs structure
+  pfs_fs *pfsp = fs_op_info(fs, PFS_TYPE);
   pfsp->dev = dev;
   pfsp->dirty = 0;
   pfsp->buffer = alloc_page();
 
-  // 2.3. usually read [super] (1 block) from device to pfsp->buffer
-  //      BUT for volatile RAM Disk, there is no super remaining on disk
-
-  //      build a new super
+  //      build a new super and save it's info to disk
   pfsp->super.magic = PFS_MAGIC;
-  pfsp->super.size = 1 + PFS_MAX_INODE_NUM + 1 + PFS_MAX_INODE_NUM * PFS_NDIRECT;
-  pfsp->super.nblocks = PFS_MAX_INODE_NUM * PFS_NDIRECT; // only direct index blocks
-  pfsp->super.ninodes = PFS_MAX_INODE_NUM;
+  pfsp->super.size = 1 + 1 + PFS_MAX_DIN_NUM + PFS_MAX_DIN_NUM * PFS_NDIRECT;
+  pfsp->super.nblocks = PFS_MAX_DIN_NUM * PFS_NDIRECT; // only direct index blocks
+  pfsp->super.ninodes = PFS_MAX_DIN_NUM;
 
   int ret;
-  //      write the super to RAM Disk0
-  memcpy(pfsp->buffer, &(pfsp->super), PFS_BLKSIZE);  // set io buffer
-  if ((ret = pfs_wblock(pfsp, PFS_BLKN_SUPER)) != 0) // write to device
+  // write the super block to disk
+  memcpy(pfsp->buffer, &(pfsp->super), PFS_BLKSIZE); // set io buffer
+  if (pfs_wblock(pfsp, PFS_BLKN_SUPER) != 0)         // write to device
     panic("pfs: failed to write super!\n");
 
-  // 2.4. similarly, build an empty [bitmap] and write to RAM Disk0
+  // build a new bitmap and save it's info to disk
   pfsp->freemap = alloc_page();
   memset(pfsp->freemap, 0, PFS_BLKSIZE);
-  pfsp->freemap[0] = 1; // the first data block is used for root directory
-
-  //      write the bitmap to RAM Disk0
-  memcpy(pfsp->buffer, pfsp->freemap, PFS_BLKSIZE);    // set io buffer
+  pfsp->freemap[0] = 1;                               // the first data block is used for root directory
+  memcpy(pfsp->buffer, pfsp->freemap, PFS_BLKSIZE);   // set io buffer
   if ((ret = pfs_wblock(pfsp, PFS_BLKN_BITMAP)) != 0) // write to device
     panic("pfs: failed to write bitmap!\n");
 
-  // 2.5. build inodes (inode -> pfsp->buffer -> RAM Disk0)
-  pfs_dinode *pinode = (pfs_dinode *)pfsp->buffer;
-  pinode->size = 0;
-  pinode->type = T_FREE;
-  pinode->nlinks = 0;
-  pinode->blocks = 0;
+  // build new disk_inodes and save it's info to disk
+  disk_inode *din = (disk_inode *)pfsp->buffer;
 
-  //      write disk inodes to RAM Disk0
-  for (int i = 1; i < pfsp->super.ninodes; ++i)
-    if ((ret = pfs_wblock(pfsp, PFS_BLKN_INODE + i)) != 0)
+  // build new root directory disk_inode
+  din->size = sizeof(pfs_dir_entry);
+  din->type = T_DIR;
+  din->nlinks = 1;
+  din->blocks = 1;
+  din->direct[0] = PFS_BLKN_FREE;
+  if ((ret = pfs_wblock(pfsp, PFS_BLKN_DIN)) != 0) //      write to disk
+    panic("pfs: failed to write root inode!\n");
+
+  // build other disk_inodes
+  din->size = 0;
+  din->type = T_FREE;
+  din->nlinks = 0;
+  din->blocks = 0;
+  for (int i = 1; i < pfsp->super.ninodes; i++) //      write to disk
+    if ((ret = pfs_wblock(pfsp, PFS_BLKN_DIN + i)) != 0)
       panic("pfs: failed to write inodes!\n");
 
-  //      build root directory inode (ino = 0)
-  pinode->size = sizeof(struct pfs_dir_entry);
-  pinode->type = T_DIR;
-  pinode->nlinks = 1;
-  pinode->blocks = 1;
-  pinode->direct[0] = PFS_BLKN_FREE;
-
-  //      write root directory inode to RAM Disk0
-  if ((ret = pfs_wblock(pfsp, PFS_BLKN_INODE)) != 0)
+  // build root directory block
+  pfs_create_dirblock(pfsp, PFS_BLKN_DIN, "/");
+  if ((ret = pfs_wblock(pfsp, PFS_BLKN_FREE)) != 0) //      write to disk
     panic("pfs: failed to write root inode!\n");
 
-  // 2.6. write root directory block
-  pfs_create_dirblock(pfsp, PFS_BLKN_INODE, "/");
-
-  //      write root directory block to RAM Disk0
-  if ((ret = pfs_wblock(pfsp, PFS_BLKN_FREE)) != 0)
-    panic("pfs: failed to write root inode!\n");
-
-  // 3. mount functions
+  // mount functions
   fs->fs_get_root = pfs_get_root;
   fs->fs_unmount = pfs_unmount;
-  fs->fs_cleanup = pfs_cleanup;
 
   *vfs_fs = fs;
 
   return 0;
 }
 
-int pfs_rblock(struct pfs_fs *pfs, int blkno) {
-  return dev_op_io(pfs->dev, blkno,pfs->buffer, 0);
-}
-
-int pfs_wblock(struct pfs_fs *pfs, int blkno) {
-  return dev_op_io(pfs->dev, blkno,pfs->buffer, 1);
-}
-
 //
-// Return root inode of filesystem.
+// build inode according to disk_inode
 //
-inode *pfs_get_root(struct fs *fs) {
-  inode *node;
-  // get pfs pointer
-  pfs_fs *pfsp = fs_op_info(fs, PFS_TYPE);
-  // load the root inode
-  pfs_load_dinode(pfsp, PFS_BLKN_INODE, &node);
-  return node;
-}
+int pfs_create_inode(pfs_fs *pfsp, disk_inode *din, int ino, inode **node_store) {
+  // alloc inode in memory
+  inode *node = alloc_inode(PFS_TYPE);
 
-//
-// load inode from disk (ino: inode number)
-//
-int pfs_load_dinode(pfs_fs *pfsp, int ino, inode **node_store) {
-  inode *node;
-  int ret;
-  // load inode[ino] from disk -> pfs buffer -> dnode
-  if ((ret = pfs_rblock(pfsp, PFS_BLKN_INODE)) != 0)
-    panic("pfs: failed to read inode!\n");
-  pfs_dinode *dnode = (pfs_dinode *)pfsp->buffer;
-
-  // build inode according to dinode
-  if ((ret = pfs_create_inode(pfsp, dnode, ino, &node)) != 0)
-    panic("pfs: failed to create inode from dinode!\n");
-  *node_store = node;
-  return 0;
-}
-
-/*
- * Create an inode in kernel according to din
- *
- */
-int pfs_create_inode(struct pfs_fs *pfsp, struct pfs_dinode *din, int ino, struct inode **node_store) {
-  // 1. alloc an vfs-inode in memory
-  struct inode *node = alloc_inode(PFS_TYPE);
-  // 2. copy disk-inode data
-  struct pfs_dinode *dnode = vop_info(node, PFS_TYPE);
-  dnode->size = din->size;
-  dnode->type = din->type;
-  dnode->nlinks = din->nlinks;
-  dnode->blocks = din->blocks;
+  // get disk_inode info from inode and set it's info by copying other disk-inode data
+  disk_inode *din_from_node = vop_info(node, PFS_TYPE);
+  din_from_node->size = din->size;
+  din_from_node->type = din->type;
+  din_from_node->nlinks = din->nlinks;
+  din_from_node->blocks = din->blocks;
   for (int i = 0; i < PFS_NDIRECT; ++i)
-    dnode->direct[i] = din->direct[i];
+    din_from_node->direct[i] = din->direct[i];
 
-  // 3. set inum, ref_count, in_fs, in_ops
+  // set node's info
   node->inum = ino;
   node->ref_count = 0;
   node->in_fs = (struct fs *)pfsp;
-  node->in_ops = pfs_get_ops(dnode->type);
+  node->in_ops = pfs_get_ops(din_from_node->type);
 
+  // store this node
   *node_store = node;
   return 0;
 }
@@ -188,18 +120,190 @@ int pfs_create_inode(struct pfs_fs *pfsp, struct pfs_dinode *din, int ino, struc
 // create a directory block
 //
 int pfs_create_dirblock(struct pfs_fs *pfsp, int ino, char *name) {
-  pfs_dir_entry *de = (pfs_dir_entry *)pfsp->buffer;
-  de->inum = ino;
-  strcpy(de->name, name);
+  pfs_dir_entry *dir_e = (pfs_dir_entry *)pfsp->buffer; // for pfs_fs io to disk
+  dir_e->inum = ino;
+  strcpy(dir_e->name, name);
+  return 0;
+}
+
+int pfs_alloc_block(struct pfs_fs *pfs) {
+  int freeblkno = -1;
+  for (int i = 0; i < pfs->super.nblocks; ++i) {
+    if (pfs->freemap[i] == 0) { // find a free block to use
+      pfs->freemap[i] = 1;
+      freeblkno = PFS_BLKN_FREE + i;
+      break;
+    }
+  }
+  if (freeblkno == -1)
+    panic("no free block now!\n");
+  return freeblkno;
+}
+
+//
+// create a file with name in the given directory
+//
+int pfs_create(inode *dir, const char *name, inode **node_store) {
+  fs *fs = dir->in_fs;
+  pfs_fs *pfs = fs_op_info(fs, PFS_TYPE);
+
+  // alloc a disk-inode on disk
+  disk_inode *din;
+  int blkno;
+  for (blkno = PFS_BLKN_DIN; blkno < PFS_MAX_DIN_NUM + PFS_BLKN_DIN; blkno++) {
+    pfs_rblock(pfs, blkno); // read dinode block
+    din = (disk_inode *)pfs->buffer;
+    if (din->type == T_FREE) // find a free inode block
+      break;
+  }
+  int ino = blkno; // inode blkno
+
+  // set disk_inode info
+  din->size = 0;
+  din->type = T_FILE;
+  din->nlinks = 1;
+  din->blocks = 1;
+  din->direct[0] = pfs_alloc_block(pfs); // find a free block
+
+  // write the disk_inode data to disk
+  pfs_wblock(pfs, blkno);
+  if (pfs_create_inode(pfs, din, ino, node_store) != 0) // build inode according to dinode
+    panic("pfs_create: failed to create inode from dinode!\n");
+
+  // add a directory entry in the dir file
+
+  // change dir-inode's block on disk
+  pfs_rblock(pfs, dir->inum);
+  din = (disk_inode *)pfs->buffer;
+  din->size += sizeof(pfs_dir_entry);
+  pfs_wblock(pfs, dir->inum);
+
+  // get din to add info
+  din = vop_info(dir, PFS_TYPE);
+  blkno = din->direct[din->size / PFS_BLKSIZE];
+  pfs_rblock(pfs, blkno);
+
+  // add ino,name
+  uint64 addr = (uint64)pfs->buffer + din->size % PFS_BLKSIZE;
+  pfs_dir_entry *dir_e = (struct pfs_dir_entry *)addr;
+  dir_e->inum = ino;
+  strcpy(dir_e->name, name);
+
+  // write to disk
+  pfs_wblock(pfs, blkno);
+
+  return 0;
+}
+
+int pfs_rblock(struct pfs_fs *pfs, int blkno) {
+  return dev_op_io(pfs->dev, blkno, pfs->buffer, 0);
+}
+
+int pfs_wblock(struct pfs_fs *pfs, int blkno) {
+  return dev_op_io(pfs->dev, blkno, pfs->buffer, 1);
+}
+
+//
+// read data by inode
+//
+int pfs_read(inode *node, char *buf, uint64 len) {
+  struct disk_inode *din = vop_info(node, PFS_TYPE);
+  struct fs *fs = node->in_fs;
+  struct pfs_fs *pfs = fs_op_info(fs, PFS_TYPE);
+
+  len = MIN(len, din->size);
+  char bio[len + 1];
+
+  int offset = 0, i = 0;
+
+  while (offset + PFS_BLKSIZE < len) {
+    pfs_rblock(pfs, din->direct[i]);
+    memcpy(bio + offset, pfs->buffer, PFS_BLKSIZE);
+    offset += PFS_BLKSIZE;
+    i++;
+  }
+  pfs_rblock(pfs, din->direct[i]);
+  memcpy(bio + offset, pfs->buffer, len - offset);
+  bio[len] = '\0';
+  strcpy(buf, bio);
+  return 0;
+}
+
+//
+// write data by inode
+//
+int pfs_write(struct inode *node, char *buf, uint64 len) {
+  struct disk_inode *din = vop_info(node, PFS_TYPE);
+  struct fs *fs = node->in_fs;
+  struct pfs_fs *pfs = fs_op_info(fs, PFS_TYPE);
+
+  din->size = (strlen(buf) + 1) * sizeof(char);
+
+  // write data
+  int total = len / PFS_BLKSIZE;
+  int remain = len % PFS_BLKSIZE;
+  if (remain != 0)
+    total++;
+
+  for (int offset = 0, i = 0; i < total; ++i) {
+    // find a block
+    if (i == din->blocks) {
+      din->direct[i] = pfs_alloc_block(pfs);
+      ++din->blocks;
+    }
+    if (i == total - 1)
+      memcpy(pfs->buffer, buf + offset, PFS_BLKSIZE);
+    else
+      memcpy(pfs->buffer, buf + offset, remain);
+    pfs_wblock(pfs, din->direct[i]);
+    offset += PFS_BLKSIZE;
+  }
+
+  // change disk inode info
+  pfs_rblock(pfs, node->inum);
+  int tmp = din->blocks;
+  din = (disk_inode *)pfs->buffer; // dinode
+  din->size = (strlen(buf) + 1) * sizeof(char);
+  din->blocks = tmp;
+  pfs_wblock(pfs, node->inum);
+  return 0;
+}
+
+//
+// return root inode of filesystem.
+//
+inode *pfs_get_root(struct fs *fs) {
+  inode *node;
+  // get pfs pointer
+  pfs_fs *pfsp = fs_op_info(fs, PFS_TYPE);
+  // load the root inode
+  pfs_load_dinode(pfsp, PFS_BLKN_DIN, &node);
+  return node;
+}
+
+//
+// load inode from disk
+//
+int pfs_load_dinode(pfs_fs *pfsp, int ino, inode **node_store) {
+  inode *node;
+  // load disk_inode from disk
+  if (pfs_rblock(pfsp, PFS_BLKN_DIN) != 0)
+    panic("fail to read inode!\n");
+
+  // disk_inode get data
+  disk_inode *din = (disk_inode *)pfsp->buffer;
+
+  // build inode according to disk_inode
+  if ((pfs_create_inode(pfsp, din, ino, &node)) != 0)
+    panic("fail to create inode!\n");
+
+  // get inode
+  *node_store = node;
   return 0;
 }
 
 int pfs_unmount(struct fs *fs) {
   return 0;
-}
-
-void pfs_cleanup(struct fs *fs) {
-  return;
 }
 
 int pfs_opendir(struct inode *node, int open_flags) {
@@ -217,199 +321,44 @@ int pfs_close(struct inode *node) {
 }
 
 int pfs_fstat(struct inode *node, struct fstat *stat) {
-  pfs_dinode *dnode = vop_info(node, PFS_TYPE);
-  stat->st_mode = dnode->type;
-  stat->st_nlinks = dnode->nlinks;
-  stat->st_blocks = dnode->blocks;
-  stat->st_size = dnode->size;
+  disk_inode *din = vop_info(node, PFS_TYPE);
+  stat->st_mode = din->type;
+  stat->st_nlinks = din->nlinks;
+  stat->st_blocks = din->blocks;
+  stat->st_size = din->size;
   return 0;
 }
 
 /*
- * lookup the path in the given directory
- * @param node: directory node
- * @param path: filename
- * @param node_store: store the file inode
- * @return
- *    0: the file is found
- *    1: the file is not found, need to be created
+ * lookup the path in the directory
+  if fail to found file, create a new file here
  */
-int pfs_lookup(struct inode *node, char *path, struct inode **node_store) {
-  struct pfs_dinode *dnode = vop_info(node, PFS_TYPE);
-  struct pfs_fs *pfsp = fs_op_info(node->in_fs, PFS_TYPE);
+int pfs_lookup(inode *node, char *path, inode **node_store) {
+  // get disk_inode,pfs_fs info from inode
+  disk_inode *din = vop_info(node, PFS_TYPE);
+  pfs_fs *pfsp = fs_op_info(node->in_fs, PFS_TYPE);
 
-  // 读入一个dir block，遍历direntry，查找filename
-  struct pfs_dir_entry *de = NULL;
+  // read a directory block, direntry 查找filename
+  pfs_dir_entry *dir_e = NULL;
 
-  int nde = dnode->size / sizeof(struct pfs_dir_entry);
-  int maxde = PFS_BLKSIZE / sizeof(struct pfs_dir_entry);
-
-  for (int i = 0; i < nde; ++i) {
-    if (i % maxde == 0) {                         // 需要切换block基地址
-      pfs_rblock(pfsp, dnode->direct[i / maxde]); // 读入第i/maxde个block
-      de = (struct pfs_dir_entry *)pfsp->buffer;
+  int total = din->size / sizeof(pfs_dir_entry);
+  int BLKlen = PFS_BLKSIZE / sizeof(pfs_dir_entry);
+  // traversal direntry
+  for (int i = 0; i < total; ++i) {
+    if (i % BLKlen == 0) { // need change to next block dir_entry
+      int num = i / BLKlen;
+      pfs_rblock(pfsp, din->direct[num]);    // read another block
+      dir_e = (pfs_dir_entry *)pfsp->buffer; // get dir_e data
     }
-    if (strcmp(de->name, path) == 0) { // 找到文件
-      pfs_rblock(pfsp, de->inum);     // 读入文件的dinode块到buffer
-      pfs_create_inode(pfsp, (struct pfs_dinode *)pfsp->buffer, de->inum, node_store);
+    if (strcmp(dir_e->name, path) == 0) {                   // find filename
+      pfs_rblock(pfsp, dir_e->inum);                        // read disk_inode data from disk to buffer
+      disk_inode *din = pfsp->buffer;                       // get disk_inode
+      pfs_create_inode(pfsp, din, dir_e->inum, node_store); // build inode according to disk_inode
       return 0;
     }
-    ++de;
+    dir_e++; // change to next dir_entry
   }
-  return 1; // no file inode, need to be created
-}
-
-int pfs_alloc_block(struct pfs_fs *pfs) {
-  int freeblkno = -1;
-  for (int i = 0; i < pfs->super.nblocks; ++i) {
-    if (pfs->freemap[i] == 0) { // find a free block
-      pfs->freemap[i] = 1;
-      freeblkno = PFS_BLKN_FREE + i;
-      // sprint("pfs_alloc_block: blkno: %d\n", freeblkno);
-      break;
-    }
-  }
-  if (freeblkno == -1)
-    panic("pfs_alloc_block: no free block!\n");
-  return freeblkno;
-}
-
-/*
- * create a file named "name" in the given directory (node)
- * @param node: dir node
- * @param name: file name
- * @param node_store: store the file inode
- */
-int pfs_create(inode *dir, const char *name, inode **node_store) {
-  // 1. build dinode, inode for a new file
-  // alloc a disk-inode on disk
-  fs *fs = dir->in_fs;
-  pfs_fs *pfs = fs_op_info(fs, PFS_TYPE);
-  
-  pfs_dinode *din;
-  int blkno = 0; // inode blkno = ino
-  for (int i = 0; i < PFS_MAX_INODE_NUM; ++i) {
-    blkno = PFS_BLKN_INODE + i;
-    pfs_rblock(pfs, blkno); // read dinode block
-    din = (pfs_dinode *)pfs->buffer;
-    if (din->type == T_FREE) // find a free inode block
-      break;
-  }
-  int ino = blkno;
-
-  // build a dinode for the file
-  din->size = 0;
-  din->type = T_FILE;
-  din->nlinks = 1;
-  din->blocks = 1;
-  din->direct[0] = pfs_alloc_block(pfs); // find a free block
-
-  // write the dinode to disk
-  pfs_wblock(pfs, blkno);
-
-  // build inode according to dinode
-  int ret;
-  if ((ret = pfs_create_inode(pfs, din, ino, node_store)) != 0)
-    panic("pfs_create: failed to create inode from dinode!\n");
-
-  // struct inode * rino = *node_store;
-  // struct pfs_dinode * pfs_din = vop_info(rino, PFS_TYPE);
-
-  // 2. add a directory entry in the dir file
-  // 2.1. 修改dir-inode-block on disk
-  pfs_rblock(pfs, dir->inum);
-  din = (struct pfs_dinode *)pfs->buffer;
-  din->size += sizeof(struct pfs_dir_entry);
-  pfs_wblock(pfs, dir->inum);
-
-  // 2.2. 修改dir-data-block
-  din = vop_info(dir, PFS_TYPE);
-  // din->size += sizeof(struct pfs_dir_entry);
-
-  // 接在din->size后面
-  blkno = din->direct[din->size / PFS_BLKSIZE];
-
-  // 读入数据块
-  pfs_rblock(pfs, blkno);
-
-  // 添加内容(ino, name)
-  uint64 addr = (uint64)pfs->buffer + din->size % PFS_BLKSIZE;
-  struct pfs_dir_entry *de = (struct pfs_dir_entry *)addr;
-  de->inum = ino;
-  strcpy(de->name, name);
-
-  // 写回设备
-  pfs_wblock(pfs, blkno);
-
-  return 0;
-}
-
-int pfs_read(inode *node, char *buf, uint64 len) {
-  struct pfs_dinode *din = vop_info(node, PFS_TYPE);
-  struct fs *fs = node->in_fs;
-  struct pfs_fs *pfs = fs_op_info(fs, PFS_TYPE);
-
-  len = MIN(len, din->size);
-  sprint("pfs_read: len: %d\n", len);
-  char buffer[len + 1];
-
-  int readtime = ROUNDUP(len, PFS_BLKSIZE) / PFS_BLKSIZE;
-  sprint("pfs_read: read %d times from disk. \n", readtime);
-
-  int offset = 0, i = 0;
-
-  while (offset + PFS_BLKSIZE < len) {
-    pfs_rblock(pfs, din->direct[i]);
-    memcpy(buffer + offset, pfs->buffer, PFS_BLKSIZE);
-    offset += PFS_BLKSIZE;
-    i++;
-  }
-  pfs_rblock(pfs, din->direct[i]);
-  memcpy(buffer + offset, pfs->buffer, len - offset);
-  buffer[len] = '\0';
-  strcpy(buf, buffer);
-  return 0;
-}
-
-int pfs_write(struct inode *node, char *buf, uint64 len) {
-  // write inode
-  struct pfs_dinode *din = vop_info(node, PFS_TYPE);
-  din->size = (strlen(buf) + 1) * sizeof(char);
-
-  struct fs *fs = node->in_fs;
-  struct pfs_fs *pfs = fs_op_info(fs, PFS_TYPE);
-
-  // write data
-  int writetime = len / PFS_BLKSIZE;
-  int remain = len % PFS_BLKSIZE;
-  if (remain > 0)
-    ++writetime;
-  sprint("pfs_write: write %d times from disk. \n", writetime);
-
-  int offset = 0;
-  int i = 0;
-  for (; i < writetime; ++i) {
-    // find a block
-    if (i == din->blocks) {
-      din->direct[i] = pfs_alloc_block(pfs);
-      ++din->blocks;
-    }
-    if (i == writetime - 1)
-      memcpy(pfs->buffer, buf + offset, PFS_BLKSIZE);
-    else
-      memcpy(pfs->buffer, buf + offset, remain);
-    pfs_wblock(pfs, din->direct[i]);
-    offset += PFS_BLKSIZE;
-  }
-
-  int nblocks = din->blocks;
-  // write disk-inode (size, blocks)
-  pfs_rblock(pfs, node->inum);
-  din = (struct pfs_dinode *)pfs->buffer; // dinode
-  din->size = (strlen(buf) + 1) * sizeof(char);
-  din->blocks = nblocks;
-  pfs_wblock(pfs, node->inum);
-  return 0;
+  return 1; // fail to find file inode, means create a new file here
 }
 
 // pfs DIR operations correspond to the abstract operations on a inode.
@@ -437,6 +386,6 @@ const struct inode_ops *pfs_get_ops(int type) {
   case T_FILE:
     return &pfs_node_fileops;
   default:
-    panic("invalid pfs option type\n");
+    panic("invalid pfs_option type!\n");
   }
 }

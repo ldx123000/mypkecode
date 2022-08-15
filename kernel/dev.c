@@ -7,8 +7,9 @@
 #include "util/types.h"
 #include "vfs.h"
 
-// DISK BASE ADDRESS list
+// disk basr address list
 void *DISK_BASE_ADDR[MAX_DEV];
+// dev index
 int index = 0;
 
 //
@@ -59,7 +60,8 @@ void dev_disk_init(char *devname) {
 // Initialize devices
 //
 void dev_init(void) {
-  dev_disk_init("ramdisk0"); // add the device entry to vfs_dev_list
+  dev_disk_init("Disk_D");
+  dev_disk_init("Disk_1");
 }
 
 int disk_io(device *dev, int blkno, void *iob, bool write) {
@@ -85,26 +87,3 @@ void dev_end(char *devname, device *dev) {
   }
   return;
 }
-
-//
-// Function table for device inodes.
-//
-// static const struct inode_ops dev_node_ops = {
-//   .vfs_open                       = dev_open,
-//   .vfs_close                      = dev_close,
-//   .vfs_read                       = dev_read,
-//   .vfs_write                      = dev_write,
-//   .vfs_fstat                      = dev_fstat,
-//   .vfs_ioctl                      = dev_ioctl,
-//   .vfs_gettype                    = dev_gettype,
-//   .vfs_tryseek                    = dev_tryseek,
-//   .vfs_lookup                     = dev_lookup,
-// };
-
-// //
-// // Create an inode for device
-// //
-// struct inode *dev_create_inode(void){
-//   struct inode * node = alloc_inode(RAMDISK0, T_DEV, &dev_node_ops, NULL);
-//   return node;
-// }
