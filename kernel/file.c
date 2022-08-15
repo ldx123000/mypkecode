@@ -151,14 +151,12 @@ int file_write(int fd, char *buf, uint64 count) {
 //
 int file_close(int fd) {
   struct file *filep = get_file_entry(fd);
-
   // host file
   if (filep->status == FD_HOST) {
     sys_close(fd);
   } else {
-    --filep->node->ref;
+    --filep->node->ref_count;
   }
-
   filep->status = FD_NONE;
   return 0;
 }

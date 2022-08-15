@@ -4,27 +4,26 @@
 #include "riscv.h"
 #include "util/types.h"
 
-#define BLOCKS 128       // sum of blocks we define
+#define BLOCKS 64       // sum of blocks we define
 #define BLOCKSIZE PGSIZE // size of one block we define
 
 //
 // device abstract
 //
 typedef struct device {
-  int d_blocks;                             // sum of blocks
-  int d_blocksize;                          // size of one block
-  int (*d_input)(void *buffer, int blkno);  // device input funtion
-  int (*d_output)(void *buffer, int blkno); // device output funtion
+  int d_blocks;                                                      // sum of blocks
+  int d_blocksize;                                                   // size of one block
+  int d_no;                                                          // device number
+  int (*d_io)(struct device *dev, int blkno, void *iob, bool write); // device io
 } device;
 
 void dev_init(void);
-
-#define dop_input(dev, buffer, blkno) ((dev)->d_input(buffer, blkno))
-#define dop_output(dev, buffer, blkno) ((dev)->d_output(buffer, blkno))
+int disk_io(device *dev, int blkno, void *iob, bool write);
+void dev_end(char *devname, device *dev);
 
 // #define dop_open(dev, open_flags)           ((dev)->d_open(dev, open_flags))
 // #define dop_close(dev)                      ((dev)->d_close(dev))
-//#define dop_io(dev, iob, write)             ((dev)->d_io(dev, iob, write))
+#define dev_op_io(dev, blkno, iob, write) ((dev)->d_io(dev, blkno, iob, write))
 // #define dop_ioctl(dev, op, data)            ((dev)->d_ioctl(dev, op, data))
 
 #endif

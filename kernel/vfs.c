@@ -58,26 +58,25 @@ int vfs_open(char *path, int open_flags, struct inode **inode_store) {
     return kfd;
   }
 
-  //if the path belongs to the PKE files device
-  if (ret == 1) {//file doesn't exists(ret==1)
+  // if the path belongs to the PKE files device
+  if (ret == 1) { // file doesn't exists(ret==1)
     int creatable = open_flags & O_CREATE;
     if (creatable == 0)
       panic("uncreatable file!\n");
 
     // create a file, and get its inode
-    char *filename;    // file name
-    inode *dir; // dir inode
+    char *filename; // file name
+    inode *dir;     // dir inode
     // find the directory of the path
-    if (vfs_lookup_parent(path, &dir, &filename) != 0)
-      panic("failed to lookup parent!\n");
+    vfs_lookup_parent(path, &dir, &filename);
 
     // create a file in the directory
     if (vop_create(dir, filename, &node) != 0)
       panic("failed to create file!\n");
   }
 
-  ++node->ref;
-  sprint("vfs_open: inode ref: %d\n", node->ref);
+  ++node->ref_count;
+  sprint("vfs_open: inode ref_count: %d\n", node->ref_count);
 
   *inode_store = node;
   return 0;
@@ -132,7 +131,7 @@ int vfs_lookup(char *path, struct inode **node_store) {
  */
 int get_device(char *path, char **subpath, struct inode **node_store) {
   int colon = -1;
-  //scan the path
+  // scan the path
   for (int i = 0; path[i] != '\0'; ++i) {
     if (path[i] == ':') {
       colon = i;
@@ -149,7 +148,7 @@ int get_device(char *path, char **subpath, struct inode **node_store) {
   // find the root node of the device in the vdev_list
   // get device name
   char devname[MAX_DEVNAME];
-  path[colon] = '\0'; //device:/filename -> devname=decive
+  path[colon] = '\0'; // device:/filename -> devname=decive
   strcpy(devname, path);
   path[colon] = ':';
   *subpath = path + colon + 2; // device:/filename -> subpath=filename
@@ -161,7 +160,7 @@ int get_device(char *path, char **subpath, struct inode **node_store) {
 // try to get root inode by devname
 //
 int vfs_get_root(const char *devname, inode **root_store) {
-  vfs_dev_t *devp=NULL;
+  vfs_dev_t *devp = NULL;
   // find the device entry in vfs_device_list
   for (int i = 0; i < MAX_DEV; i++) {
     if (strcmp(vdev_list[i]->devname, devname) == 0) {
@@ -173,7 +172,7 @@ int vfs_get_root(const char *devname, inode **root_store) {
     panic("no device entry meets demands!\n");
 
   // call fs.fs_get_root()
-  inode *rootdir = fsop_get_root(devp->fs);
+  inode *rootdir = fs_op_get_root(devp->fs);
   if (rootdir == NULL)
     panic("failed to get root dir inode!\n");
   *root_store = rootdir;

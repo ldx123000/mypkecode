@@ -12,8 +12,8 @@
 #define T_DIR 0x2
 #define T_FILE 0x3
 
-#define MAX_DEV 10     // the maximum number of vfs_dev_list
-#define MAX_DEVNAME 32 // the maximum length of devname
+#define MAX_DEV 8     // the maximum number of vfs_dev_list
+#define MAX_DEVNAME 64 // the maximum length of devname
 
 // // inode flags
 // #define I_BUSY 0x1
@@ -64,8 +64,8 @@ typedef struct fs {
 } fs;
 
 // virtual file system interfaces
-#define fsop_info(fs, type) &(fs->fs_info.__##type##_info)
-#define fsop_get_root(fs) ((fs)->fs_get_root(fs))
+#define fs_op_info(fs, type) &(fs->fs_info.__##type##_info)
+#define fs_op_get_root(fs) ((fs)->fs_get_root(fs))
 
 typedef struct inode {
   union {
@@ -74,7 +74,7 @@ typedef struct inode {
   } in_info;
   int in_type;
   int inum;                       // inode number on-disk
-  int ref;                        // reference count
+  int ref_count;                  // reference count
   struct fs *in_fs;               // file system
   const struct inode_ops *in_ops; // inode options
 } inode;
@@ -111,7 +111,6 @@ typedef struct inode_ops {
 //
 typedef struct vfs_dev_t {
   const char *devname; // the name of the device
-  int listidx;         // the index for the device in the vfs device list
   struct device *dev;  // the pointer to the device (dev.h)
   struct fs *fs;       // the file system mounted to the device
 } vfs_dev_t;

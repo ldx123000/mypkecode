@@ -3,6 +3,8 @@
  */
 
 #include "sched.h"
+#include "dev.h"
+#include "vfs.h"
 #include "spike_interface/spike_utils.h"
 
 process* ready_queue_head = NULL;
@@ -57,6 +59,13 @@ void schedule() {
 
     if( should_shutdown ){
       sprint( "no more ready processes, system shutdown now.\n" );
+      
+      // save data to disk if you want
+      // for(int i=0;i<MAX_DEV;i++){
+      //   if(vdev_list[i]->devname!=NULL)
+      //   dev_end(vdev_list[i]->devname,vdev_list[i]->dev);
+      // }
+      
       shutdown( 0 );
     }else{
       panic( "Not handled: we should let system wait for unfinished processes.\n" );
