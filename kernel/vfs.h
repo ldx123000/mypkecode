@@ -52,8 +52,8 @@ typedef struct inode {
 typedef struct inode_ops {
   int (*vop_open)(struct inode *node, int open_flags);
   int (*vop_close)(struct inode *node);
-  int (*vop_read)(struct inode *node, char *buf, uint64 len);
-  int (*vop_write)(struct inode *node, char *buf, uint64 len);
+  int (*vop_read)(struct inode *node, char *buf);
+  int (*vop_write)(struct inode *node, char *buf);
   int (*vop_fstat)(struct inode *node, struct fstat *stat);
   int (*vop_create)(struct inode *node, const char *name, struct inode **node_store);
   int (*vop_lookup)(struct inode *node, char *path, struct inode **node_store);
@@ -61,8 +61,8 @@ typedef struct inode_ops {
 
 // virtual file system inode interfaces
 #define vop_info(inode, type) &(inode->in_info.__##type##_inode_info)
-#define vop_read(inode, buf, len) (inode->in_ops->vop_read(inode, buf, len))
-#define vop_write(inode, buf, len) (inode->in_ops->vop_write(inode, buf, len))
+#define vop_read(inode, buf) (inode->in_ops->vop_read(inode, buf))
+#define vop_write(inode, buf) (inode->in_ops->vop_write(inode, buf))
 #define vop_fstat(inode, stat) (inode->in_ops->vop_fstat(inode, stat))
 #define vop_create(inode, name, node_store) (inode->in_ops->vop_create(inode, name, node_store))
 #define vop_lookup(inode, path, node_store) (inode->in_ops->vop_lookup(inode, path, node_store))

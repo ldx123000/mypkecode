@@ -2,16 +2,16 @@
  * Supervisor-mode startup codes
  */
 
-#include "riscv.h"
-#include "string.h"
 #include "elf.h"
-#include "process.h"
-#include "pmm.h"
-#include "vmm.h"
-#include "sched.h"
-#include "memlayout.h"
-#include "spike_interface/spike_utils.h"
 #include "filesystem.h"
+#include "memlayout.h"
+#include "pmm.h"
+#include "process.h"
+#include "riscv.h"
+#include "sched.h"
+#include "spike_interface/spike_utils.h"
+#include "string.h"
+#include "vmm.h"
 
 //
 // trap_sec_start points to the beginning of S-mode trap segment (i.e., the entry point of
@@ -34,8 +34,8 @@ void enable_paging() {
 // load the elf, and construct a "process" (with only a trapframe).
 // load_bincode_from_host_elf is defined in elf.c
 //
-process* load_user_program( ) {
-  process* proc;
+process *load_user_program() {
+  process *proc;
 
   proc = alloc_process();
 
@@ -68,10 +68,11 @@ int s_start(void) {
 
   // then init file system
   fs_init();
+  sprint("initial file system complete!\n");
 
   // the application code (elf) is first loaded into memory, and then put into execution
   sprint("Switch to user mode...\n");
-  insert_to_ready_queue( load_user_program() );
+  insert_to_ready_queue(load_user_program());
   schedule();
 
   return 0;

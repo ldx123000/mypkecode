@@ -12,8 +12,6 @@ void pfs_init(void) {
   int ret;
   if ((ret = pfs_mount("Disk_D")) != 0)
     panic("failed: pfs: pfs_mount: %d.\n", ret);
-  if ((ret = pfs_mount("Disk_1")) != 0)
-    panic("failed: pfs: pfs_mount: %d.\n", ret);
 }
 
 int pfs_mount(const char *devname) {
@@ -206,66 +204,32 @@ int pfs_wblock(struct pfs_fs *pfs, int blkno) {
 //
 // read data by inode
 //
-int pfs_read(inode *node, char *buf, uint64 len) {
+int pfs_read(inode *node, char *buf) {
   struct disk_inode *din = vop_info(node, PFS_TYPE);
   struct fs *fs = node->in_fs;
   struct pfs_fs *pfs = fs_op_info(fs, PFS_TYPE);
+  int len=strlen(buf);
 
-  len = MIN(len, din->size);
-  char bio[len + 1];
-
-  int offset = 0, i = 0;
-
-  while (offset + PFS_BLKSIZE < len) {
-    pfs_rblock(pfs, din->direct[i]);
-    memcpy(bio + offset, pfs->buffer, PFS_BLKSIZE);
-    offset += PFS_BLKSIZE;
-    i++;
-  }
-  pfs_rblock(pfs, din->direct[i]);
-  memcpy(bio + offset, pfs->buffer, len - offset);
-  bio[len] = '\0';
-  strcpy(buf, bio);
+  panic("You need to implement the pfs_read function in lab5_3 here.\n");
+  //try to use pfs_rblock to get the data from disk
+  
   return 0;
 }
 
 //
 // write data by inode
 //
-int pfs_write(struct inode *node, char *buf, uint64 len) {
+int pfs_write(struct inode *node, char *buf) {
   struct disk_inode *din = vop_info(node, PFS_TYPE);
   struct fs *fs = node->in_fs;
   struct pfs_fs *pfs = fs_op_info(fs, PFS_TYPE);
+  int len=strlen(buf);
+  din->size = (len + 1) * sizeof(char);
+  panic("You need to implement the pfs_read function in lab5_3 here.\n");
+  //try to use pfs_wblock to put the data to disk
+  //you may need pfs_alloc_block to alloc block
 
-  din->size = (strlen(buf) + 1) * sizeof(char);
-
-  // write data
-  int total = len / PFS_BLKSIZE;
-  int remain = len % PFS_BLKSIZE;
-  if (remain != 0)
-    total++;
-
-  for (int offset = 0, i = 0; i < total; ++i) {
-    // find a block
-    if (i == din->blocks) {
-      din->direct[i] = pfs_alloc_block(pfs);
-      ++din->blocks;
-    }
-    if (i == total - 1)
-      memcpy(pfs->buffer, buf + offset, PFS_BLKSIZE);
-    else
-      memcpy(pfs->buffer, buf + offset, remain);
-    pfs_wblock(pfs, din->direct[i]);
-    offset += PFS_BLKSIZE;
-  }
-
-  // change disk inode info
-  pfs_rblock(pfs, node->inum);
-  int tmp = din->blocks;
-  din = (disk_inode *)pfs->buffer; // dinode
-  din->size = (strlen(buf) + 1) * sizeof(char);
-  din->blocks = tmp;
-  pfs_wblock(pfs, node->inum);
+  
   return 0;
 }
 

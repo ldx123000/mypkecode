@@ -33,7 +33,7 @@ file *get_file_entry(int fd) {
 int file_open(char *pathname, int flags) {
   // find inode for the file(create if not exist)
   inode *node;
-  int ret = vfs_open(pathname, flags, &node);
+  vfs_open(pathname, flags, &node);
 
   // find a free files_structure in the PCB
   int fd;
@@ -74,7 +74,7 @@ int file_open(char *pathname, int flags) {
   // use vop_fstat to get the file size from inode, and set the offset
   filep->off = 0;
   struct fstat st; // file status
-  if ((ret = vop_fstat(node, &st)) != 0) {
+  if (vop_fstat(node, &st) != 0) {
     panic("fail to get file status!\n");
   }
   filep->off = st.st_size;
@@ -86,12 +86,13 @@ int file_open(char *pathname, int flags) {
 // find file entry by fd
 // and read
 //
-int file_read(int fd, char *buf, uint64 size) {
+int file_read(int fd, char *buf) {
   file *filep = get_file_entry(fd);
   if (filep->readable == 0)
     panic("unreadable file!\n");
+  int size=strlen(buf);
   char buffer[size + 1];
-  vop_read(filep->node, buffer, size);
+  vop_read(filep->node, buffer);
   strcpy(buf, buffer);
   return 0;
 }
@@ -100,11 +101,11 @@ int file_read(int fd, char *buf, uint64 size) {
 // find file entry by fd
 // and write
 //
-int file_write(int fd, char *buf, uint64 size) {
+int file_write(int fd, char *buf) {
   file *filep = get_file_entry(fd);
   if (filep->writable == 0)
     panic("unwritable file!\n");
-  vop_write(filep->node, buf, size);
+  vop_write(filep->node, buf);
   return 0;
 }
 
@@ -131,7 +132,7 @@ files_struct *files_struct_init(void) {
     filesp->fd_array[i].status = FD_NONE;
     filesp->fd_array[i].refcnt = 0;
   }
-  sprint("create a files_struct for process\n");
+  sprint("finish creating a files_struct for process\n");
   return filesp;
 }
 

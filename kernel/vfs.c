@@ -76,7 +76,7 @@ int vfs_open(char *path, int open_flags, struct inode **inode_store) {
   }
 
   ++node->ref_count;
-  sprint("inode ref_count: %d\n", node->ref_count);
+  //sprint("inode ref_count: %d\n", node->ref_count);
 
   *inode_store = node;
   return 0;
@@ -102,6 +102,7 @@ int vfs_lookup(char *path, struct inode **node_store) {
   int ret = get_device(path, &path, &dir);
   // wrong format
   if (ret == -1) {
+    panic("format error!\n");
     return -1;
   }
   // given root directory inode to find the inode

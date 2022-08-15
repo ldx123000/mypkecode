@@ -53,7 +53,7 @@ void dev_disk_init(char *devname) {
 
   // add device to vfs_dev list
   vdev_list[index++] = pdev;
-  sprint("base address of RAM Disk0 is: %p\n", DISK_BASE_ADDR[index]);
+  sprint("base address of device is: %p\n", DISK_BASE_ADDR[index-1]);
 }
 
 //
@@ -61,7 +61,6 @@ void dev_disk_init(char *devname) {
 //
 void dev_init(void) {
   dev_disk_init("Disk_D");
-  dev_disk_init("Disk_1");
 }
 
 int disk_io(device *dev, int blkno, void *iob, bool write) {

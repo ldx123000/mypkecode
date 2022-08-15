@@ -9,6 +9,6 @@ void naive_free(void* va);
 int fork();
 void yield();
 int open(const char *path, int flags);
-int read1(int fd, void *buf, uint64 count);
-int write1(int fd, void *buf, uint64 count);
+int fgets(void *buf,int fd);
+int fputs(void *buf,int fd);
 int close(int fd);

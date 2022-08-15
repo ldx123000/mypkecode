@@ -87,15 +87,15 @@ int open(const char *path, int flags) {
 //
 // lib call to read
 //
-int read1(int fd, void * buf, uint64 count){
-  return do_user_call(SYS_user_read, fd, (uint64)buf, count, 0, 0, 0, 0);
+int fgets(void * buf,int fd){
+  return do_user_call(SYS_user_read, (uint64)buf, fd, 0, 0, 0, 0, 0);
 }
 
 //
 // lib call to write
 //
-int write1(int fd, void *buf, uint64 count) {
-  return do_user_call(SYS_user_write, fd, (uint64)buf, count, 0, 0, 0, 0);
+int fputs(void * buf,int fd) {
+  return do_user_call(SYS_user_write, (uint64)buf, fd, 0, 0, 0, 0, 0);
 }
 
 //

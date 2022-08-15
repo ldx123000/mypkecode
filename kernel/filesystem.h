@@ -9,8 +9,8 @@
 #define MASK_FILEMODE 0x003
 
 int file_open(char *pathname, int flags);
-int file_read(int fd, char *buf, uint64 count);
-int file_write(int fd, char *buf, uint64 count);
+int file_read(int fd, char *buf);
+int file_write(int fd, char *buf);
 int file_close(int fd);
 
 

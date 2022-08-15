@@ -13,10 +13,10 @@
 #define SYS_user_fork (SYS_user_base + 4)
 #define SYS_user_yield (SYS_user_base + 5)
 
-#define SYS_user_open (SYS_user_base + 17)
-#define SYS_user_read (SYS_user_base + 18)
-#define SYS_user_write (SYS_user_base + 19)
-#define SYS_user_close (SYS_user_base + 20)
+#define SYS_user_open (SYS_user_base + 6)
+#define SYS_user_read (SYS_user_base + 7)
+#define SYS_user_write (SYS_user_base + 8)
+#define SYS_user_close (SYS_user_base + 9)
 
 long do_syscall(long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7);
 
