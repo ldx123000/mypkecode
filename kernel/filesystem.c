@@ -86,12 +86,13 @@ int file_open(char *pathname, int flags) {
 // find file entry by fd
 // and read
 //
-int file_read(int fd, char *buf, uint64 size) {
+int file_read(int fd, char *buf) {
   file *filep = get_file_entry(fd);
   if (filep->readable == 0)
     panic("unreadable file!\n");
+  int size=strlen(buf);
   char buffer[size + 1];
-  vop_read(filep->node, buffer, size);
+  vop_read(filep->node, buffer);
   strcpy(buf, buffer);
   return 0;
 }
@@ -100,11 +101,11 @@ int file_read(int fd, char *buf, uint64 size) {
 // find file entry by fd
 // and write
 //
-int file_write(int fd, char *buf, uint64 size) {
+int file_write(int fd, char *buf) {
   file *filep = get_file_entry(fd);
   if (filep->writable == 0)
     panic("unwritable file!\n");
-  vop_write(filep->node, buf, size);
+  vop_write(filep->node, buf);
   return 0;
 }
 

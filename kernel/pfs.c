@@ -206,11 +206,12 @@ int pfs_wblock(struct pfs_fs *pfs, int blkno) {
 //
 // read data by inode
 //
-int pfs_read(inode *node, char *buf, uint64 len) {
+int pfs_read(inode *node, char *buf) {
   struct disk_inode *din = vop_info(node, PFS_TYPE);
   struct fs *fs = node->in_fs;
   struct pfs_fs *pfs = fs_op_info(fs, PFS_TYPE);
 
+  uint64 len=strlen(buf);
   len = MIN(len, din->size);
   char bio[len + 1];
 
@@ -232,13 +233,14 @@ int pfs_read(inode *node, char *buf, uint64 len) {
 //
 // write data by inode
 //
-int pfs_write(struct inode *node, char *buf, uint64 len) {
+int pfs_write(struct inode *node, char *buf) {
   struct disk_inode *din = vop_info(node, PFS_TYPE);
   struct fs *fs = node->in_fs;
   struct pfs_fs *pfs = fs_op_info(fs, PFS_TYPE);
 
   din->size = (strlen(buf) + 1) * sizeof(char);
-
+  uint64 len=strlen(buf);
+  
   // write data
   int total = len / PFS_BLKSIZE;
   int remain = len % PFS_BLKSIZE;
