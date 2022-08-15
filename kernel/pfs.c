@@ -306,20 +306,6 @@ int pfs_unmount(struct fs *fs) {
   return 0;
 }
 
-int pfs_opendir(struct inode *node, int open_flags) {
-  int fd = 0;
-  return fd;
-}
-
-int pfs_openfile(struct inode *node, int open_flags) {
-  return 0;
-}
-
-int pfs_close(struct inode *node) {
-  int fd = 0;
-  return fd;
-}
-
 int pfs_fstat(struct inode *node, struct fstat *stat) {
   disk_inode *din = vop_info(node, PFS_TYPE);
   stat->st_mode = din->type;
@@ -329,10 +315,10 @@ int pfs_fstat(struct inode *node, struct fstat *stat) {
   return 0;
 }
 
-/*
- * lookup the path in the directory
-  if fail to found file, create a new file here
- */
+//
+// lookup the path in the directory
+// if fail to found file, create a new file here
+//
 int pfs_lookup(inode *node, char *path, inode **node_store) {
   // get disk_inode,pfs_fs info from inode
   disk_inode *din = vop_info(node, PFS_TYPE);
@@ -363,8 +349,6 @@ int pfs_lookup(inode *node, char *path, inode **node_store) {
 
 // pfs DIR operations correspond to the abstract operations on a inode.
 static const struct inode_ops pfs_node_dirops = {
-    .vop_open = pfs_opendir,
-    .vop_close = pfs_close,
     .vop_fstat = pfs_fstat,
     .vop_lookup = pfs_lookup,
     .vop_create = pfs_create,
@@ -372,8 +356,6 @@ static const struct inode_ops pfs_node_dirops = {
 
 // pfs FILE operations correspond to the abstract operations on a inode.
 static const struct inode_ops pfs_node_fileops = {
-    .vop_open = pfs_openfile,
-    .vop_close = pfs_close,
     .vop_read = pfs_read,
     .vop_write = pfs_write,
     .vop_fstat = pfs_fstat,

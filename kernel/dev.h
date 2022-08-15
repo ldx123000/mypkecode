@@ -1,3 +1,4 @@
+//device for disk etc.
 #ifndef _DEV_H_
 #define _DEV_H_
 

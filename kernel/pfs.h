@@ -1,3 +1,5 @@
+//PKE file system 
+//specific file system
 #ifndef _pfs_H_
 #define _pfs_H_
 
@@ -58,24 +60,13 @@ typedef struct pfs_dir_entry {
 void pfs_init(void);
 int pfs_mount(const char *devname);
 int pfs_do_mount(struct device *dev, struct fs **vfs_fs);
-
-int pfs_rblock(struct pfs_fs *pfs, int blkno);
-int pfs_wblock(struct pfs_fs *pfs, int blkno);
-
-struct inode *pfs_get_root(struct fs *fs);
 int pfs_unmount(struct fs *fs);
-
-// int pfs_rblock(struct pfs_fs *pfs, void *buf, int32 blkno, int32 nblks);
-// int pfs_wblock(struct pfs_fs *pfs, void *buf, int32 blkno, int32 nblks);
-// int pfs_rbuf(struct pfs_fs *pfs, void *buf, size_t len, int32 blkno, off_t offset);
-// int pfs_wbuf(struct pfs_fs *pfs, void *buf, size_t len, int32 blkno, off_t offset);
-// int pfs_sync_super(struct pfs_fs *pfs);
-// int pfs_sync_freemap(struct pfs_fs *pfs);
-// int pfs_clear_block(struct pfs_fs *pfs, int32 blkno, int32 nblks);
-
-int pfs_load_dinode(struct pfs_fs *pfsp, int ino, struct inode **node_store);
 int pfs_create_inode(struct pfs_fs *pfsp, struct disk_inode *din, int ino, struct inode **node_store);
 int pfs_create_dirblock(struct pfs_fs *pfsp, int ino, char *name);
+int pfs_rblock(struct pfs_fs *pfs, int blkno);
+int pfs_wblock(struct pfs_fs *pfs, int blkno);
+struct inode *pfs_get_root(struct fs *fs);
+int pfs_load_dinode(struct pfs_fs *pfsp, int ino, struct inode **node_store);
 
 const struct inode_ops *pfs_get_ops(int type);
 
