@@ -79,6 +79,7 @@ int file_open(char *pathname, int flags) {
   }
   filep->off = st.st_size;
   ++current->filesp->files_count;
+  sprint("successful open a file!\n");
   return filep->fd;
 }
 

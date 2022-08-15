@@ -237,6 +237,8 @@ int pfs_write(struct inode *node, char *buf) {
 // return root inode of filesystem.
 //
 inode *pfs_get_root(struct fs *fs) {
+  panic("You need to implement the pfs_read function in lab5_2 here.\n");
+  //try to get root inode and return it in this function
   inode *node;
   // get pfs pointer
   pfs_fs *pfsp = fs_op_info(fs, PFS_TYPE);

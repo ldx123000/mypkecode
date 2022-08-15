@@ -83,24 +83,3 @@ void yield() {
 int open(const char *path, int flags) {
   return do_user_call(SYS_user_open, (uint64)path, flags, 0, 0, 0, 0, 0);
 }
-
-//
-// lib call to read
-//
-int fgets(void * buf,int fd){
-  return do_user_call(SYS_user_read, (uint64)buf, fd, 0, 0, 0, 0, 0);
-}
-
-//
-// lib call to write
-//
-int fputs(void * buf,int fd) {
-  return do_user_call(SYS_user_write, (uint64)buf, fd, 0, 0, 0, 0, 0);
-}
-
-//
-// lib call to close
-//
-int close(int fd) {
-  return do_user_call(SYS_user_close, fd, 0, 0, 0, 0, 0, 0);
-}

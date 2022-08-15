@@ -52,12 +52,6 @@ int vfs_open(char *path, int open_flags, struct inode **inode_store) {
   inode *node;
   int ret = vfs_lookup(path, &node);
 
-  // the path belongs to the host device
-  if (ret == -1) {
-    int kfd = sys_open(path, open_flags);
-    return kfd;
-  }
-
   // if the path belongs to the PKE files device
   if (ret == 1) { // file doesn't exists(ret==1)
     int creatable = open_flags & O_CREATE;
