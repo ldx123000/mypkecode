@@ -36,7 +36,7 @@ int vfs_mount(const char *devname, int (*mountfunc)(struct device *dev, struct f
     }
   }
   if (devp == NULL)
-    panic("vfs_mount: Cannot find the device entry!\n");
+    panic("fail to find the device entry!\n");
 
   // mount the specific file system to the device with mountfunc
   if (mountfunc(devp->dev, &(devp->fs)) == 0)
@@ -48,20 +48,6 @@ int vfs_mount(const char *devname, int (*mountfunc)(struct device *dev, struct f
 // get an inode from given path
 //
 int vfs_open(char *path, int open_flags, struct inode **inode_store) {
-  // get open_flags
-  // int writable = 0;
-  int creatable = open_flags & O_CREATE;
-  // switch (open_flags & MASK_FILEMODE) { // 获取flags的低2位
-  // case O_RDONLY:
-  //   break;
-  // case O_WRONLY:
-  // case O_RDWR:
-  //   writable = 1;
-  //   break;
-  // default:
-  //   panic("fs_open: invalid open flags!\n");
-  // }
-
   // lookup the path, and create an related inode
   inode *node;
   int ret = vfs_lookup(path, &node);
@@ -74,10 +60,11 @@ int vfs_open(char *path, int open_flags, struct inode **inode_store) {
 
   //if the path belongs to the PKE files device
   if (ret == 1) {//file doesn't exists(ret==1)
+    int creatable = open_flags & O_CREATE;
     if (creatable == 0)
       panic("uncreatable file!\n");
 
-    // Case 2.2.2: create a file, and get its inode
+    // create a file, and get its inode
     char *filename;    // file name
     inode *dir; // dir inode
     // find the directory of the path

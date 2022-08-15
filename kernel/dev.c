@@ -12,8 +12,7 @@ void *RAMDISK0_BASE_ADDR;
 int index = 0;
 
 //
-// 从 buffer 中获取数据，写入第 blkno 块
-// buffer -> RAM Disk0[blkno] (data size: 1 block)
+// data from buffer to block
 //
 int disk_input(void *buffer, int blkno) {
   if (blkno < 0 || blkno >= BLOCKS)
@@ -24,8 +23,7 @@ int disk_input(void *buffer, int blkno) {
 }
 
 //
-// 从第 blkno 块获取数据，写入 buffer 中
-// RAM Disk0[blkno] -> buffer (data size: 1 block)
+// data from block to buffer
 //
 int disk_output(void *buffer, int blkno) {
   if (blkno < 0 || blkno >= BLOCKS)

@@ -24,7 +24,7 @@ void dev_init(void);
 
 // #define dop_open(dev, open_flags)           ((dev)->d_open(dev, open_flags))
 // #define dop_close(dev)                      ((dev)->d_close(dev))
-// #define dop_io(dev, iob, write)             ((dev)->d_io(dev, iob, write))
+//#define dop_io(dev, iob, write)             ((dev)->d_io(dev, iob, write))
 // #define dop_ioctl(dev, op, data)            ((dev)->d_ioctl(dev, op, data))
 
 #endif
