@@ -8,13 +8,9 @@
 #include "util/string.h"
 #include "spike_interface/spike_file.h"
 
-
+int *a;
 int main(int argc, char *argv[]) {
-  int fd;
-
-  fd = open("Disk_D:/a/b/c/files", O_RDWR|O_CREATE);
-  printu("file descriptor is %d\n\n",fd);
-
+  a=naive_malloc();
   exit(0);
   return 0;
 }

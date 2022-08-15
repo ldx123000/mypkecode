@@ -76,10 +76,3 @@ int fork() {
 void yield() {
   do_user_call(SYS_user_yield, 0, 0, 0, 0, 0, 0, 0);
 }
-
-//
-// lib call to open
-//
-int open(const char *path, int flags) {
-  return do_user_call(SYS_user_open, (uint64)path, flags, 0, 0, 0, 0, 0);
-}

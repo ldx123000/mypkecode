@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "spike_interface/spike_utils.h"
 
+int times=0;
 // _end is defined in kernel/kernel.lds, it marks the ending (virtual) address of PKE kernel
 extern char _end[];
 // g_mem_size is defined in spike_interface/spike_memory.c, it indicates the size of our
@@ -49,6 +50,8 @@ void free_page(void *pa) {
 // Allocates only ONE page!
 //
 void *alloc_page(void) {
+  times++;
+  sprint("%d\n",times);
   list_node *n = g_free_mem_list.next;
   if (n) g_free_mem_list.next = n->next;
 
