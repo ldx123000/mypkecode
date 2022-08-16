@@ -11,6 +11,8 @@
 #include "vfs.h"
 
 void fs_init(void) {
+  //panic("You need to implement the fs_init function in lab5_1 here.\n");
+  //finish lab5_1
   dev_init();
   pfs_init();
 }

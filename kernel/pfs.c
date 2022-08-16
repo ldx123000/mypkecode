@@ -9,6 +9,8 @@
 // pfs_init: called by fs_init
 //
 void pfs_init(void) {
+  //panic("You need to implement the pfs_init function in lab5_1 here.\n");
+  //finish lab5_1
   int ret;
   if ((ret = pfs_mount("Disk_D")) != 0)
     panic("failed: pfs: pfs_mount: %d.\n", ret);
@@ -237,7 +239,7 @@ int pfs_write(struct inode *node, char *buf) {
 // return root inode of filesystem.
 //
 inode *pfs_get_root(struct fs *fs) {
-  panic("You need to implement the pfs_read function in lab5_2 here.\n");
+  //panic("You need to implement the pfs_read function in lab5_2 here.\n");
   //try to get root inode and return it in this function
   inode *node;
   // get pfs pointer
