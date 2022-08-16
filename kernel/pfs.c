@@ -10,12 +10,12 @@
 //
 void pfs_init(void) {
   //panic("You need to implement the fs_init function in lab5_1 here.\n");
-  int ret;
-  if ((ret = pfs_mount("Disk_D")) != 0)
-    panic("failed: pfs: pfs_mount: %d.\n", ret);
+  if (pfs_mount("Disk_D") != 0)
+    panic("fail to init file system!\n");
 }
 
 int pfs_mount(const char *devname) {
+  //panic("You need to implement the fs_init function in lab5_1 here.\n");
   return vfs_mount(devname, pfs_do_mount);
 }
 
