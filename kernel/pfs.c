@@ -9,7 +9,7 @@
 // pfs_init: called by fs_init
 //
 void pfs_init(void) {
-  //panic("You need to implement the pfs_init function in lab5_1 here.\n");
+  //panic("You need to implement the fs_init function in lab5_1 here.\n");
   //finish lab5_1
   int ret;
   if ((ret = pfs_mount("Disk_D")) != 0)
@@ -19,6 +19,7 @@ void pfs_init(void) {
 }
 
 int pfs_mount(const char *devname) {
+    //panic("You need to implement the fs_init function in lab5_1 here.\n");
   return vfs_mount(devname, pfs_do_mount);
 }
 
