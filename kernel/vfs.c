@@ -76,7 +76,6 @@ int vfs_open(char *path, int open_flags, struct inode **inode_store) {
   }
 
   ++node->ref_count;
-  sprint("inode ref_count: %d\n", node->ref_count);
 
   *inode_store = node;
   return 0;

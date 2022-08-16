@@ -60,7 +60,8 @@ void dev_disk_init(char *devname) {
 // Initialize devices
 //
 void dev_init(void) {
-  panic("You need to implement the pfs_read function in lab5_3 here.\n");
+  //panic("You need to implement the dev_init function in lab5_1 here.\n");
+  //finish lab5_1
   dev_disk_init("Disk_D");
   dev_disk_init("Disk_1");
 }
