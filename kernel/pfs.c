@@ -214,12 +214,11 @@ int pfs_read(inode *node, char *buf) {
   struct pfs_fs *pfs = fs_op_info(fs, PFS_TYPE);
 
   uint64 len=strlen(buf);
-  len = MIN(len, din->size);
 
+  //panic("You need to implement the pfs_read function in lab5_3 here.\n");
+  //try to use pfs_rblock to get the data from disk
   char bio[len + 1];
-
   int offset = 0, i = 0;
-
   while (offset + PFS_BLKSIZE < len) {
     pfs_rblock(pfs, din->direct[i]);
     memcpy(bio + offset, pfs->buffer, PFS_BLKSIZE);
@@ -241,8 +240,11 @@ int pfs_write(struct inode *node, char *buf) {
   struct fs *fs = node->in_fs;
   struct pfs_fs *pfs = fs_op_info(fs, PFS_TYPE);
 
-  din->size = (strlen(buf) + 1) * sizeof(char);
   uint64 len=strlen(buf);
+  din->size = len * sizeof(char);
+  
+  //panic("You need to implement the pfs_read function in lab5_3 here.\n");
+  //try to use pfs_rblock to get the data from disk
 
   // write data
   int total = len / PFS_BLKSIZE;
