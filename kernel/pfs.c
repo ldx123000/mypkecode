@@ -9,6 +9,7 @@
 // pfs_init: called by fs_init
 //
 void pfs_init(void) {
+  //panic("You need to implement the fs_init function in lab5_1 here.\n");
   int ret;
   if ((ret = pfs_mount("Disk_D")) != 0)
     panic("failed: pfs: pfs_mount: %d.\n", ret);

@@ -51,7 +51,7 @@ void free_page(void *pa) {
 //
 void *alloc_page(void) {
   times++;
-  sprint("%d\n",times);
+  sprint("alloc page times: %d\n",times);
   list_node *n = g_free_mem_list.next;
   if (n) g_free_mem_list.next = n->next;
 

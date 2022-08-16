@@ -1,6 +1,6 @@
  /*
- * Below is the given application for lab5_2.
- * The goal of this app is to get correct information by using function open. 
+ * Below is the given application for lab5_1.
+ * The goal of this app is to get correct information by mounting file system. 
  */
 
 #include "user/user_lib.h"
