@@ -79,6 +79,7 @@ int file_open(char *pathname, int flags) {
   }
   filep->off = st.st_size;
   ++current->filesp->files_count;
+  sprint("finish creating a files_struct for process!\n");
   return filep->fd;
 }
 
