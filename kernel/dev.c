@@ -52,8 +52,8 @@ void dev_disk_init(char *devname) {
   // dev_data_load(devname,pd);
 
   // add device to vfs_dev list
-  vdev_list[index++] = pdev;
-  sprint("base address of RAM Disk0 is: %p\n", DISK_BASE_ADDR[index]);
+  vdev_list[index] = pdev;
+  sprint("the base address of device is: %p\n", DISK_BASE_ADDR[index++]);
 }
 
 //

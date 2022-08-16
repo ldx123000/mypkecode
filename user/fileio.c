@@ -16,23 +16,23 @@ int main(int argc, char *argv[]) {
 
   fd = open("Disk_D:/files", O_RDWR|O_CREATE);
   fputs(buf, fd);
-  printu("write content: \n%s\n", buf);
+  printu("the content of write: \n%s\n", buf);
   close(fd);
 
   fd = open("Disk_D:/files", O_RDONLY);
   fgets(buf2, fd);
-  printu("read content: \n%s\n", buf);
+  printu("the content of read: \n%s\n", buf);
   close(fd);
 
   strcpy(buf,"hello world!\n");
   fd = open("Disk_1:/d/file", O_RDWR|O_CREATE);
   fputs(buf, fd);
-  printu("write content: \n%s\n", buf);
+  printu("the content of write: \n%s\n", buf);
   close(fd);
 
   fd = open("Disk_1:/d/file", O_RDONLY);
   fgets(buf2, fd);
-  printu("read content: \n%s\n", buf);
+  printu("the content of read: \n%s\n", buf);
   close(fd);
 
   exit(0);
