@@ -17,7 +17,7 @@ int main(void) {
     shared_memory(WRITE, (char *)&value, 4, sizeof(int));
     shared_memory(READ, (char *)&value, 0, sizeof(int));
     message = "to parent"; // child's message now
-    shared_memory(WRITE, (char *)message, 20, CHAR_ARR);
+    shared_memory(WRITE, (char *)message, 0, CHAR_ARR);
     shared_memory(READ, (char *)message, 10, CHAR_ARR);
     printu("child's value : %d %s.\n", value, message);
   } else {
@@ -26,7 +26,7 @@ int main(void) {
     shared_memory(READ, (char *)&value, 4, sizeof(int));
     message = "to child"; // parent's message now
     shared_memory(WRITE, (char *)message, 10, CHAR_ARR);
-    shared_memory(READ, (char *)message, 20, CHAR_ARR);
+    shared_memory(READ, (char *)message, 0, CHAR_ARR);
     printu("parent's value : %d %s.\n", value, message);
   }
   exit(0);
